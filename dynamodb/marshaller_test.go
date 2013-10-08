@@ -33,7 +33,7 @@ type TestStruct struct {
 }
 
 func testObject() *TestStruct {
-  t, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)", "Mar 3, 2003 at 5:03pm (PST)")
+  t, _ := time.Parse("Jan 2, 2006 at 3:04pm (GMT)", "Mar 3, 2003 at 5:03pm (GMT)")
 	
 	return &TestStruct{
 		TestBool:        true,
@@ -75,12 +75,12 @@ func testAttrs() []dynamodb.Attribute {
 		dynamodb.Attribute{Type: "NS", Name: "TestInt8Array", Value: "", SetValues: []string{"0", "1", "12", "123"}},
 		dynamodb.Attribute{Type: "NS", Name: "TestFloatArray", Value: "", SetValues: []string{"0.1", "1.1", "1.2", "1.23", "1.234", "1.2345"}},
 		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00-08:00\"", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00Z\"", SetValues: []string(nil)},
 	}
 }
 
 func testObjectWithNilSets() *TestStruct {
-	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)", "Mar 3, 2003 at 5:03pm (PST)")
+	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (GMT)", "Mar 3, 2003 at 5:03pm (GMT)")
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
@@ -104,7 +104,7 @@ func testObjectWithNilSets() *TestStruct {
 	}
 }
 func testObjectWithEmptySets() *TestStruct {
-	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)", "Mar 3, 2003 at 5:03pm (PST)")
+	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (GMT)", "Mar 3, 2003 at 5:03pm (GMT)")
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
@@ -139,7 +139,7 @@ func testAttrsWithNilSets() []dynamodb.Attribute {
 		dynamodb.Attribute{Type: "S", Name: "TestString", Value: "test", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "S", Name: "TestByteArray", Value: "Ynl0ZXM=", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00-08:00\"", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00Z\"", SetValues: []string(nil)},
 	}
 }
 
