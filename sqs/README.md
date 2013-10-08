@@ -6,7 +6,7 @@ Merged from https://github.com/Mistobaan/sqs
 Installation
 ------------
 
-   go get github.com/crowdmob/goamz/sqs
+   go get github.com/hailocab/goamz/sqs
 
 
 Testing

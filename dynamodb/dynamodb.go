@@ -2,7 +2,7 @@ package dynamodb
 
 import simplejson "github.com/bitly/go-simplejson"
 import (
-	"github.com/crowdmob/goamz/aws"
+	"github.com/hailocab/goamz/aws"
 	"io/ioutil"
 	"net/http"
 	"strings"
