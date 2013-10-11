@@ -1,13 +1,10 @@
 package dynamodb_test
 
 import (
-	"flag"
 	"github.com/hailocab/goamz/aws"
 	"github.com/hailocab/goamz/dynamodb"
 	"testing"
 )
-
-var amazon = flag.Bool("amazon", false, "Enable tests against amazon server")
 
 func dynamodbServerSetup(t *testing.T) (dynamodb.Server) {
 	auth, err := aws.EnvAuth()
