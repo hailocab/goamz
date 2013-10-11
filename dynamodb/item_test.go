@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+var amazon = flag.Bool("amazon", false, "Enable tests against amazon server")
+
 func dynamodbServerSetup(t *testing.T) (dynamodb.Server) {
 	auth, err := aws.EnvAuth()
 
@@ -18,6 +20,11 @@ func dynamodbServerSetup(t *testing.T) (dynamodb.Server) {
 }
 
 func TestPutItem(t *testing.T) {
+	if !*amazon {
+		t.Log("Amazon tests not enabled")
+		return
+	}
+	
 	server := dynamodbServerSetup(t)
 	key := dynamodb.PrimaryKey{dynamodb.NewStringAttribute("id", ""), nil}
 	table := server.NewTable("gotest", key)
@@ -37,6 +44,11 @@ func TestPutItem(t *testing.T) {
 }
 
 func TestBatchWriteItem(t *testing.T) {
+	if !*amazon {
+		t.Log("Amazon tests not enabled")
+		return
+	}
+	
 	server := dynamodbServerSetup(t)
 	key := dynamodb.PrimaryKey{dynamodb.NewStringAttribute("id", ""), nil}
 	table := server.NewTable("gotest", key)
