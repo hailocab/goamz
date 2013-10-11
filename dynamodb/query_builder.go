@@ -223,7 +223,7 @@ func (q *Query) addComparisons(comparisons []AttributeComparison) {
 }
 
 // The primary key must be included in attributes.
-func (q *Query) AddItem(attributes []Attribute) {
+func (q *Query) AddItem(item *Item) {
 	b := q.buffer
 
 	addComma(b)
@@ -231,7 +231,7 @@ func (q *Query) AddItem(attributes []Attribute) {
 	b.WriteString(quote("Item"))
 	b.WriteString(":")
 
-	attributeList(b, attributes)
+	attributeList(b, item.GetAttributes())
 }
 
 func (q *Query) AddUpdates(attributes []Attribute, action string) {
@@ -323,7 +323,7 @@ func (q *Query) AddExpected(attributes []Attribute) {
 	b.WriteString("}")
 }
 
-func attributeList(b *bytes.Buffer, attributes []Attribute) {
+func attributeList(b *bytes.Buffer, attributes []*Attribute) {
 	b.WriteString("{")
 	for index, a := range attributes {
 		if index > 0 {
@@ -353,6 +353,118 @@ func attributeList(b *bytes.Buffer, attributes []Attribute) {
 		b.WriteString("}")
 	}
 	b.WriteString("}")
+}
+
+func (q *Query) AddBatchWriteItemOperations(request *BatchWriteItemRequest) {
+	b := q.buffer
+
+	b.WriteString(quote("RequestItems"))
+	b.WriteString(":")
+
+	for table, operation := range request.GetOperations() {
+		b.WriteString("{")
+		b.WriteString(quote(table))
+		b.WriteString(":")
+		b.WriteString("[")
+		b.WriteString("{")
+
+		for itemIndex, item := range operation.GetDeleteRequest() {
+			b.WriteString(quote("DeleteRequest"))
+			b.WriteString(":")
+			b.WriteString("{")
+			b.WriteString(quote("Key"))
+			b.WriteString(":")
+			b.WriteString("{")
+			for attributeIndex, a := range item.GetAttributes() {
+				b.WriteString(quote(a.Name))
+				b.WriteString(":")
+				b.WriteString("{")
+				b.WriteString(quote(a.Type))
+				b.WriteString(":")
+
+				if a.SetType() {
+					b.WriteString("[")
+					for i, aval := range a.SetValues {
+						if i > 0 {
+							b.WriteString(",")
+						}
+						b.WriteString(quote(aval))
+					}
+					b.WriteString("]")
+				} else {
+					b.WriteString(quote(a.Value))
+				}
+				b.WriteString("}")
+				
+				if (attributeIndex < len(item.GetAttributes()) - 1) {
+					b.WriteString(",")
+				}
+			}
+			
+			b.WriteString("}")
+			b.WriteString("}")
+			if (itemIndex < len(operation.GetDeleteRequest()) - 1) {
+				b.WriteString(",")
+			}
+		}
+
+		for itemIndex, item := range operation.GetPutRequest() {
+			b.WriteString(quote("PutRequest"))
+			b.WriteString(":")
+			b.WriteString("{")
+			b.WriteString(quote("Item"))
+			b.WriteString(":")
+			b.WriteString("{")
+			for attributeIndex, a := range item.GetAttributes() {
+				b.WriteString(quote(a.Name))
+				b.WriteString(":")
+				b.WriteString("{")
+				b.WriteString(quote(a.Type))
+				b.WriteString(":")
+
+				if a.SetType() {
+					b.WriteString("[")
+					for i, aval := range a.SetValues {
+						if i > 0 {
+							b.WriteString(",")
+						}
+						b.WriteString(quote(aval))
+					}
+					b.WriteString("]")
+				} else {
+					b.WriteString(quote(a.Value))
+				}
+				b.WriteString("}")
+				
+				if (attributeIndex < len(item.GetAttributes()) - 1) {
+					b.WriteString(",")
+				}
+			}
+			b.WriteString("}")
+			b.WriteString("}")
+			if (itemIndex < len(operation.GetPutRequest()) - 1) {
+				b.WriteString(",")
+			}
+		}
+
+		b.WriteString("}")
+		b.WriteString("]")
+		b.WriteString("}")
+	}
+
+	if request.GetReturnConsumedCapacity() {
+		b.WriteString(",")
+		b.WriteString(quote("ReturnConsumedCapacity"))
+		b.WriteString(":")
+		b.WriteString(quote("TOTAL"))
+	}
+
+	if request.GetReturnItemCollecionMetrics() {
+		b.WriteString(",")
+		b.WriteString(quote("ReturnItemCollecionMetrics"))
+		b.WriteString(":")
+		b.WriteString(quote("SIZE"))
+	}
 }
 
 func (q *Query) addTable(t *Table) {

@@ -7,9 +7,117 @@ import (
 	"fmt"
 )
 
+type BatchWriteItemRequest struct {
+	operations map[string]*BatchWriteItemOperations
+	returnConsumedCapacity bool
+	returnItemCollecionMetrics bool
+}
+
+type BatchWriteItemOperations struct {
+	deleteRequest []*Item
+	putRequest []*Item
+}
+
 type BatchGetItem struct {
 	Server *Server
-	Keys   map[*Table][]Key
+	Keys map[*Table][]Key
+}
+
+type Item struct {
+	attributes []*Attribute
+}
+
+func NewItem() (*Item) {
+	return &Item{}
+}
+
+func (i *Item) AddAttribute(attribute *Attribute) {
+	i.attributes = append(i.attributes, attribute)
+}
+
+func (i *Item) AddAttributesFromMap(attributes map[string]*Attribute) {
+	for _, attribute := range attributes {
+		i.AddAttribute(attribute)
+	}
+}
+
+func (i *Item) GetAttributes() ([]*Attribute) {
+	return i.attributes
+}
+
+func (i *Item) GetSize() (int) {
+	size := 0
+	for _, attribute := range i.attributes {
+		size += len(attribute.Value)
+	}
+	
+	return size
+}
+
+func NewBatchWriteItemRequest() (*BatchWriteItemRequest) {
+	return &BatchWriteItemRequest{make(map[string]*BatchWriteItemOperations), false, false}
+}
+
+func (b *BatchWriteItemRequest) SetReturnConsumedCapacity(value bool) {
+	b.returnConsumedCapacity = value
+	log.Print("Parsing of the ReturnConsumedCapacity in the response not implemented")
+}
+
+func (b *BatchWriteItemRequest) SetReturnItemCollecionMetrics(value bool) {
+	b.returnItemCollecionMetrics = value
+	log.Print("Parsing of the ReturnItemCollecionMetrics in the response not implemented")
+}
+
+func (b *BatchWriteItemRequest) GetReturnConsumedCapacity() (bool) {
+	return b.returnConsumedCapacity
+}
+
+func (b *BatchWriteItemRequest) GetReturnItemCollecionMetrics() (bool) {
+	return b.returnItemCollecionMetrics
+}
+
+func (b *BatchWriteItemRequest) AddDeleteRequest(table string, item *Item) {
+	if _, ok := b.operations[table]; !ok {
+		b.operations[table] = &BatchWriteItemOperations{}
+	}
+	
+	b.operations[table].deleteRequest = append(b.operations[table].deleteRequest, item)
+}
+
+func (b *BatchWriteItemRequest) AddPutRequest(table string, item *Item) {
+	if _, ok := b.operations[table]; !ok {
+		b.operations[table] = &BatchWriteItemOperations{}
+	}
+	
+	b.operations[table].putRequest = append(b.operations[table].putRequest, item)
+}
+
+func (b *BatchWriteItemRequest) GetOperations() (map[string]*BatchWriteItemOperations) {
+	return b.operations
+}
+
+func (b *BatchWriteItemRequest) GetItems() ([]*Item) {
+	items := []*Item{}
+	for _, operations := range b.GetOperations() {
+		
+		for _, request := range operations.GetDeleteRequest() {
+			items = append(items, request)
+		}
+		
+		for _, request := range operations.GetPutRequest() {
+			items = append(items, request)
+		}
+	}
+	
+	return items
+}
+
+func (b *BatchWriteItemOperations) GetDeleteRequest() ([]*Item) {
+	return b.deleteRequest
+}
+
+func (b *BatchWriteItemOperations) GetPutRequest() ([]*Item) {
+	return b.putRequest
 }
 
 func (t *Table) BatchGetItems(keys []Key) *BatchGetItem {
@@ -28,7 +136,7 @@ func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute,
 	q := NewEmptyQuery()
 	q.AddRequestItems(batchGetItem.Keys)
 
-	jsonResponse, err := batchGetItem.Server.queryServer("DynamoDB_20120810.BatchGetItem", q)
+	jsonResponse, err := batchGetItem.Server.queryServer(target("BatchGetItem"), q)
 	if err != nil {
 		return nil, err
 	}
@@ -103,21 +211,105 @@ func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
 
 }
 
-func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute) (bool, error) {
+func (t *Table) BatchWriteItem(request *BatchWriteItemRequest) (map[string]map[string][]*Item, error) {
+	if len(request.GetItems()) > 25 {
+		return nil, errors.New("Each request cannot contain more than 25 items")
+	}
+	
+	if len(request.GetItems()) == 0 {
+		return nil, errors.New("The request must contain at least 1 item")
+	}
+	
+	totalSize := 0
+	for _, item := range request.GetItems() {
+		size := item.GetSize()
+		totalSize += size
+		if size > 65536 {
+			return nil, errors.New("The size of the item cannot exceed 64KB")
+		}
+	}
+	
+	if totalSize > 1048576 {
+		return nil, errors.New("The size of the request cannot exceed 1MB")
+	}
+	
+	q := NewEmptyQuery()
+	q.AddBatchWriteItemOperations(request)
+	
+	jsonResponse, err := t.Server.queryServer(target("BatchWriteItem"), q)
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	json, err := simplejson.NewJson(jsonResponse)
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	results := make(map[string]map[string][]*Item)
+	tables, err := json.Get("UnprocessedItems").Map()
+	if err != nil {
+		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+		return nil, errors.New(message)
+	}
+	
+	for table, containerJson := range tables {
+		tableResult := make(map[string][]*Item)
+		
+		containerArray, ok := containerJson.([]interface{})
+		if !ok {
+			message := fmt.Sprintf("Unexpected response %s", containerArray)
+			return nil, errors.New(message)
+		}
+		
+		for _, container := range containerArray {
+			operations, ok := container.(map[string]interface{})
+			if !ok {
+				message := fmt.Sprintf("Unexpected response %s", container)
+				return nil, errors.New(message)
+			}
+			
+			for opType, itemsJson := range operations {
+				itemsArray, ok := itemsJson.(map[string]interface{})
+				if !ok {
+					message := fmt.Sprintf("Unexpected response %s", itemsJson)
+					return nil, errors.New(message)
+				}
+				
+				for _, attributesJson := range itemsArray {
+					attributesArray, ok := attributesJson.(map[string]interface{})
+					if !ok {
+						message := fmt.Sprintf("Unexpected response %s", attributesJson)
+						return nil, errors.New(message)
+					}
+					
+					item := NewItem()
+					item.AddAttributesFromMap(parseAttributes(attributesArray))
+					
+					tableResult[opType] = append(tableResult[opType], item)
+				}
+			}
+		}
+		
+		results[table] = tableResult
+	}
+	
+	return results, nil
+}
 
-	if len(attributes) == 0 {
+func (t *Table) PutItem(item *Item) (bool, error) {
+
+	if len(item.GetAttributes()) == 0 {
 		return false, errors.New("At least one attribute is required.")
 	}
 
 	q := NewQuery(t)
 
-	keys := t.Key.Clone(hashKey, rangeKey)
-	attributes = append(attributes, keys...)
-
-	q.AddItem(attributes)
-
+	q.AddItem(item)
+	
 	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
-
 	if err != nil {
 		return false, err
 	}
