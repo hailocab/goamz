@@ -1,6 +1,7 @@
 package dynamodb_test
 
 import (
+	"flag"
 	"github.com/hailocab/goamz/aws"
 	"github.com/hailocab/goamz/dynamodb"
 	"testing"
