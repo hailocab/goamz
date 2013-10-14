@@ -28,6 +28,11 @@ const (
 	COMPARISON_BETWEEN                  = "BETWEEN"
 )
 
+type Key struct {
+	HashKey  string
+	RangeKey string
+}
+
 type PrimaryKey struct {
 	KeyAttribute   *Attribute
 	RangeAttribute *Attribute
@@ -59,6 +64,30 @@ func NewEqualStringAttributeComparison(attributeName string, equalToValue string
 	return &AttributeComparison{attributeName,
 		COMPARISON_EQUAL,
 		[]Attribute{*str},
+	}
+}
+
+func NewStringAttributeComparison(attributeName string, comparisonOperator string, value string) *AttributeComparison {
+	valueToCompare := NewStringAttribute(attributeName, value)
+	return &AttributeComparison{attributeName,
+		comparisonOperator,
+		[]Attribute{*valueToCompare},
+	}
+}
+
+func NewNumericAttributeComparison(attributeName string, comparisonOperator string, value int64) *AttributeComparison {
+	valueToCompare := NewNumericAttribute(attributeName, strconv.FormatInt(value, 10))
+	return &AttributeComparison{attributeName,
+		comparisonOperator,
+		[]Attribute{*valueToCompare},
+	}
+}
+
+func NewBinaryAttributeComparison(attributeName string, comparisonOperator string, value bool) *AttributeComparison {
+	valueToCompare := NewBinaryAttribute(attributeName, strconv.FormatBool(value))
+	return &AttributeComparison{attributeName,
+		comparisonOperator,
+		[]Attribute{*valueToCompare},
 	}
 }
 

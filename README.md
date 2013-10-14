@@ -1,6 +1,6 @@
 # GoAMZ
 
-[![Build Status](https://travis-ci.org/hailocab/goamz.png?branch=master)](https://travis-ci.org/hailocab/goamz)
+[![Build Status](https://travis-ci.org/crowdmob/goamz.png?branch=master)](https://travis-ci.org/crowdmob/goamz)
 
 The _goamz_ package enables Go programs to interact with Amazon Web Services.
 
@@ -18,6 +18,7 @@ github.com/hailocab/goamz/ec2
 github.com/hailocab/goamz/elb
 github.com/hailocab/goamz/iam
 github.com/hailocab/goamz/s3
+github.com/hailocab/goamz/sqs
 
 github.com/hailocab/goamz/exp/mturk
 github.com/hailocab/goamz/exp/sdb
@@ -36,14 +37,14 @@ The API documentation is currently available at:
 
 Just use `go get` with any of the available packages. For example:
 
-`$ go get github.com/hailocab/goamz/ec2`
-`$ go get github.com/hailocab/goamz/s3`
+* `$ go get github.com/hailocab/goamz/ec2`
+* `$ go get github.com/hailocab/goamz/s3`
 
 ## Running tests
 
 To run tests, first install gocheck with:
 
-`$ goinstall launchpad.net/gocheck`
+`$ go get launchpad.net/gocheck`
 
 Then run go test as usual:
 

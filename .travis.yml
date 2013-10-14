@@ -2,7 +2,6 @@ language: go
 
 go:
   - 1.1
-  - tip
 
 before_install:
   - sudo apt-get update -qq > apt-get.out 2>&1  || (cat apt-get.out && exit 1)
@@ -16,3 +15,4 @@ script:
   - go test -v ./elb/
   - go test -v ./iam/
   - go test -v ./s3/
+  - go test -v ./sqs/

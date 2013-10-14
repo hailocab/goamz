@@ -1,4 +1,4 @@
-package iam
+package sqs
 
 import (
 	"crypto/hmac"
@@ -9,18 +9,12 @@ import (
 	"strings"
 )
 
-// ----------------------------------------------------------------------------
-// Version 2 signing (http://goo.gl/RSRp5)
-
 var b64 = base64.StdEncoding
 
 func sign(auth aws.Auth, method, path string, params map[string]string, host string) {
 	params["AWSAccessKeyId"] = auth.AccessKey
 	params["SignatureVersion"] = "2"
 	params["SignatureMethod"] = "HmacSHA256"
-	if auth.Token() != "" {
-		params["SecurityToken"] = auth.Token()
-	}
 
 	var sarray []string
 	for k, v := range params {
