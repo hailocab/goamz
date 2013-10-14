@@ -366,9 +366,9 @@ func (q *Query) AddBatchWriteItemOperations(request *BatchWriteItemRequest) {
 		b.WriteString(quote(table))
 		b.WriteString(":")
 		b.WriteString("[")
-		b.WriteString("{")
-
+		
 		for itemIndex, item := range operation.GetDeleteRequest() {
+			b.WriteString("{")
 			b.WriteString(quote("DeleteRequest"))
 			b.WriteString(":")
 			b.WriteString("{")
@@ -403,12 +403,14 @@ func (q *Query) AddBatchWriteItemOperations(request *BatchWriteItemRequest) {
 			
 			b.WriteString("}")
 			b.WriteString("}")
+			b.WriteString("}")
 			if (itemIndex < len(operation.GetDeleteRequest()) - 1) {
 				b.WriteString(",")
 			}
 		}
 
 		for itemIndex, item := range operation.GetPutRequest() {
+			b.WriteString("{")
 			b.WriteString(quote("PutRequest"))
 			b.WriteString(":")
 			b.WriteString("{")
@@ -442,12 +444,12 @@ func (q *Query) AddBatchWriteItemOperations(request *BatchWriteItemRequest) {
 			}
 			b.WriteString("}")
 			b.WriteString("}")
+			b.WriteString("}")
 			if (itemIndex < len(operation.GetPutRequest()) - 1) {
 				b.WriteString(",")
 			}
 		}
 
-		b.WriteString("}")
 		b.WriteString("]")
 		b.WriteString("}")
 	}
