@@ -455,7 +455,8 @@ type ReleaseAddressResp struct {
 }
 
 // Release existing elastic ip address from the account
-// Either publicIp or allocation ID must be supplied to identify the resource
+// PublicIp = Required for EC2
+// AllocationId = Required for VPC
 //
 // See http://goo.gl/Ciw2Z8 for more details
 func (ec2 *EC2) ReleaseAddress(publicIp, allocationId string) (resp *ReleaseAddressResp, err error) {
@@ -503,8 +504,10 @@ type AssociateAddressResp struct {
 // See http://goo.gl/hhj4z7 for more details
 func (ec2 *EC2) AssociateAddress(options *AssociateAddressOptions) (resp *AssociateAddressResp, err error) {
 	params := makeParams("AssociateAddress")
-	params["PublicIp"] = options.PublicIp
 	params["InstanceId"] = options.InstanceId
+	if options.PublicIp != "" {
+		params["PublicIp"] = options.PublicIp
+	}
 	if options.AllocationId != "" {
 		params["AllocationId"] = options.AllocationId
 	}
@@ -535,15 +538,13 @@ type DiassociateAddressResp struct {
 }
 
 // Diassociate an elastic ip address from an instance
-// Either publicIp or associationId must be supplied to identify the resource
-//
+// PublicIp - Required for EC2
+// AssociationId - Required for VPC
 // See http://goo.gl/Dapkuz for more details
 func (ec2 *EC2) DiassociateAddress(publicIp, associationId string) (resp *DiassociateAddressResp, err error) {
 	params := makeParams("DiassociateAddress")
-
 	if publicIp != "" {
 		params["PublicIp"] = publicIp
-
 	}
 	if associationId != "" {
 		params["AssociationId"] = associationId
