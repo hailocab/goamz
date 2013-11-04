@@ -256,6 +256,111 @@ func (s *S) TestDescribeInstancesExample2(c *gocheck.C) {
 	c.Assert(r0t1.Value, gocheck.Equals, "Production")
 }
 
+func (s *S) TestDescribeAddressesExample(c *gocheck.C) {
+	testServer.Response(200, nil, DescribeAddressesExample)
+
+	filter := ec2.NewFilter()
+	filter.Add("key1", "value1")
+	filter.Add("key2", "value2", "value3")
+
+	resp, err := s.ec2.Addresses([]string{"192.0.2.1", "198.51.100.2", "203.0.113.41"}, nil)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DescribeAddresses"})
+	c.Assert(req.Form["PublicIp.1"], gocheck.DeepEquals, []string{"192.0.2.1"})
+	c.Assert(req.Form["PublicIp.2"], gocheck.DeepEquals, []string{"198.51.100.2"})
+	c.Assert(req.Form["PublicIp.3"], gocheck.DeepEquals, []string{"203.0.113.41"})
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Addresses, gocheck.HasLen, 3)
+
+	r0 := resp.Addresses[0]
+	c.Assert(r0.PublicIp, gocheck.Equals, "192.0.2.1")
+	c.Assert(r0.Domain, gocheck.Equals, "standard")
+	c.Assert(r0.InstanceId, gocheck.Equals, "i-f15ebb98")
+
+	r0i := resp.Addresses[1]
+	c.Assert(r0i.PublicIp, gocheck.Equals, "198.51.100.2")
+	c.Assert(r0i.Domain, gocheck.Equals, "standard")
+	c.Assert(r0i.InstanceId, gocheck.Equals, "")
+
+	r0ii := resp.Addresses[2]
+	c.Assert(r0ii.PublicIp, gocheck.Equals, "203.0.113.41")
+	c.Assert(r0ii.Domain, gocheck.Equals, "vpc")
+	c.Assert(r0ii.InstanceId, gocheck.Equals, "i-64600030")
+	c.Assert(r0ii.AssociationId, gocheck.Equals, "eipassoc-f0229899")
+	c.Assert(r0ii.AllocationId, gocheck.Equals, "eipalloc-08229861")
+	c.Assert(r0ii.NetworkInterfaceOwnerId, gocheck.Equals, "053230519467")
+	c.Assert(r0ii.NetworkInterfaceId, gocheck.Equals, "eni-ef229886")
+
+}
+
+func (s *S) TestAllocateAddressExample(c *gocheck.C) {
+	testServer.Response(200, nil, AllocateAddressExample)
+
+	resp, err := s.ec2.AllocateAddress("vpc")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"AllocateAddress"})
+	c.Assert(req.Form["Domain"], gocheck.DeepEquals, []string{"vpc"})
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.PublicIp, gocheck.Equals, "198.51.100.1")
+	c.Assert(resp.Domain, gocheck.Equals, "vpc")
+	c.Assert(resp.AllocationId, gocheck.Equals, "eipalloc-5723d13e")
+}
+
+func (s *S) TestReleaseAddressExample(c *gocheck.C) {
+	testServer.Response(200, nil, ReleaseAddressExample)
+
+	resp, err := s.ec2.ReleaseAddress("192.0.2.1", "")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"ReleaseAddress"})
+	c.Assert(req.Form["PublicIp"], gocheck.DeepEquals, []string{"192.0.2.1"})
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Return, gocheck.Equals, true)
+}
+
+func (s *S) TestAssociateAddressExample(c *gocheck.C) {
+	testServer.Response(200, nil, AssociateAddressExample)
+
+	options := ec2.AssociateAddressOptions{
+		PublicIp:   "192.0.2.1",
+		InstanceId: "i-2ea64347",
+	}
+
+	resp, err := s.ec2.AssociateAddress(&options)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"AssociateAddress"})
+	c.Assert(req.Form["PublicIp"], gocheck.DeepEquals, []string{"192.0.2.1"})
+	c.Assert(req.Form["InstanceId"], gocheck.DeepEquals, []string{"i-2ea64347"})
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Return, gocheck.Equals, true)
+	c.Assert(resp.AssociationId, gocheck.Equals, "eipassoc-fc5ca095")
+}
+
+func (s *S) TestDiassociateAddressExample(c *gocheck.C) {
+	testServer.Response(200, nil, DiassociateAddressExample)
+
+	resp, err := s.ec2.DiassociateAddress("192.0.2.1", "")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DiassociateAddress"})
+	c.Assert(req.Form["PublicIp"], gocheck.DeepEquals, []string{"192.0.2.1"})
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Return, gocheck.Equals, true)
+}
+
 func (s *S) TestDescribeImagesExample(c *gocheck.C) {
 	testServer.Response(200, nil, DescribeImagesExample)
 
