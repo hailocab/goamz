@@ -1,9 +1,8 @@
 package dynamodb_test
 
 import (
-	"fmt"
 	"github.com/hailocab/goamz/dynamodb"
-	"testing"
+	"launchpad.net/gocheck"
 	"time"
 )
 
@@ -29,12 +28,13 @@ type TestStruct struct {
 	TestInt8Array   []int8
 	TestFloatArray  []float64
 	TestSub         TestSubStruct
-	TestTime        time.Time
+}
+
+type TestStructTime struct {
+	TestTime time.Time
 }
 
 func testObject() *TestStruct {
-  t, _ := time.Parse("Jan 2, 2006 at 3:04pm (GMT)", "Mar 3, 2003 at 5:03pm (GMT)")
-	
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
@@ -55,32 +55,21 @@ func testObject() *TestStruct {
 			SubString:      "subtest",
 			SubStringArray: []string{"sub1", "sub2", "sub3"},
 		},
+	}
+}
+
+func testObjectTime() *TestStructTime {
+	t, _ := time.Parse("Jan 2, 2006 at 3:04pm", "Mar 3, 2003 at 5:03pm")
+	return &TestStructTime{
 		TestTime: t,
 	}
 }
 
-func testAttrs() []dynamodb.Attribute {
-	return []dynamodb.Attribute{
-		dynamodb.Attribute{Type: "N", Name: "TestBool", Value: "1", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "N", Name: "TestInt", Value: "-99", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "N", Name: "TestInt32", Value: "999", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "N", Name: "TestInt64", Value: "9999", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "N", Name: "TestUint", Value: "99", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "N", Name: "TestFloat32", Value: "9.9999", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "N", Name: "TestFloat64", Value: "99.999999", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "S", Name: "TestString", Value: "test", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "S", Name: "TestByteArray", Value: "Ynl0ZXM=", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "SS", Name: "TestStringArray", Value: "", SetValues: []string{"test1", "test2", "test3", "test4"}},
-		dynamodb.Attribute{Type: "NS", Name: "TestIntArray", Value: "", SetValues: []string{"0", "1", "12", "123", "1234", "12345"}},
-		dynamodb.Attribute{Type: "NS", Name: "TestInt8Array", Value: "", SetValues: []string{"0", "1", "12", "123"}},
-		dynamodb.Attribute{Type: "NS", Name: "TestFloatArray", Value: "", SetValues: []string{"0.1", "1.1", "1.2", "1.23", "1.234", "1.2345"}},
-		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00Z\"", SetValues: []string(nil)},
-	}
+func testObjectWithZeroValues() *TestStruct {
+	return &TestStruct{}
 }
 
 func testObjectWithNilSets() *TestStruct {
-	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (GMT)", "Mar 3, 2003 at 5:03pm (GMT)")
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
@@ -100,11 +89,9 @@ func testObjectWithNilSets() *TestStruct {
 			SubString:      "subtest",
 			SubStringArray: []string{"sub1", "sub2", "sub3"},
 		},
-		TestTime: t,
 	}
 }
 func testObjectWithEmptySets() *TestStruct {
-	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (GMT)", "Mar 3, 2003 at 5:03pm (GMT)")
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
@@ -124,9 +111,47 @@ func testObjectWithEmptySets() *TestStruct {
 			SubString:      "subtest",
 			SubStringArray: []string{"sub1", "sub2", "sub3"},
 		},
-		TestTime: t,
 	}
 }
+
+func testAttrs() []dynamodb.Attribute {
+	return []dynamodb.Attribute{
+		dynamodb.Attribute{Type: "N", Name: "TestBool", Value: "1", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt", Value: "-99", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt32", Value: "999", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt64", Value: "9999", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestUint", Value: "99", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestFloat32", Value: "9.9999", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestFloat64", Value: "99.999999", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestString", Value: "test", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestByteArray", Value: "Ynl0ZXM=", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "SS", Name: "TestStringArray", Value: "", SetValues: []string{"test1", "test2", "test3", "test4"}},
+		dynamodb.Attribute{Type: "NS", Name: "TestIntArray", Value: "", SetValues: []string{"0", "1", "12", "123", "1234", "12345"}},
+		dynamodb.Attribute{Type: "NS", Name: "TestInt8Array", Value: "", SetValues: []string{"0", "1", "12", "123"}},
+		dynamodb.Attribute{Type: "NS", Name: "TestFloatArray", Value: "", SetValues: []string{"0.1", "1.1", "1.2", "1.23", "1.234", "1.2345"}},
+		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
+	}
+}
+
+func testAttrsTime() []dynamodb.Attribute {
+	return []dynamodb.Attribute{
+		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00Z\"", SetValues: []string(nil)},
+	}
+}
+
+func testAttrsWithZeroValues() []dynamodb.Attribute {
+	return []dynamodb.Attribute{
+		dynamodb.Attribute{Type: "N", Name: "TestBool", Value: "0", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt", Value: "0", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt32", Value: "0", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt64", Value: "0", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestUint", Value: "0", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestFloat32", Value: "0", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestFloat64", Value: "0", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":false,"SubInt":0,"SubString":"","SubStringArray":null}`, SetValues: []string(nil)},
+	}
+}
+
 func testAttrsWithNilSets() []dynamodb.Attribute {
 	return []dynamodb.Attribute{
 		dynamodb.Attribute{Type: "N", Name: "TestBool", Value: "1", SetValues: []string(nil)},
@@ -139,24 +164,26 @@ func testAttrsWithNilSets() []dynamodb.Attribute {
 		dynamodb.Attribute{Type: "S", Name: "TestString", Value: "test", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "S", Name: "TestByteArray", Value: "Ynl0ZXM=", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00Z\"", SetValues: []string(nil)},
 	}
 }
 
-func TestMarshal(t *testing.T) {
+type MarshallerSuite struct {
+}
+
+var _ = gocheck.Suite(&MarshallerSuite{})
+
+func (s *MarshallerSuite) TestMarshal(c *gocheck.C) {
 	testObj := testObject()
 	attrs, err := dynamodb.MarshalAttributes(testObj)
 	if err != nil {
-		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
 
 	expected := testAttrs()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(attrs, gocheck.DeepEquals, expected)
 }
 
-func TestUnmarshal(t *testing.T) {
+func (s *MarshallerSuite) TestUnmarshal(c *gocheck.C) {
 	testObj := &TestStruct{}
 
 	attrMap := map[string]*dynamodb.Attribute{}
@@ -167,42 +194,76 @@ func TestUnmarshal(t *testing.T) {
 
 	err := dynamodb.UnmarshalAttributes(&attrMap, testObj)
 	if err != nil {
-		t.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
+		c.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
 	}
 
 	expected := testObject()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
-		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(testObj, gocheck.DeepEquals, expected)
 }
 
-func TestMarshalNilSets(t *testing.T) {
+func (s *MarshallerSuite) TestMarshalTime(c *gocheck.C) {
+	testObj := testObjectTime()
+	attrs, err := dynamodb.MarshalAttributes(testObj)
+	if err != nil {
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+	}
+
+	expected := testAttrsTime()
+	c.Check(attrs, gocheck.DeepEquals, expected)
+}
+
+func (s *MarshallerSuite) TestUnmarshalTime(c *gocheck.C) {
+	testObj := &TestStructTime{}
+
+	attrMap := map[string]*dynamodb.Attribute{}
+	attrs := testAttrsTime()
+	for i, _ := range attrs {
+		attrMap[attrs[i].Name] = &attrs[i]
+	}
+
+	err := dynamodb.UnmarshalAttributes(&attrMap, testObj)
+	if err != nil {
+		c.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
+	}
+
+	expected := testObjectTime()
+	c.Check(testObj, gocheck.DeepEquals, expected)
+}
+
+func (s *MarshallerSuite) TestMarshalNilSets(c *gocheck.C) {
 	testObj := testObjectWithNilSets()
 	attrs, err := dynamodb.MarshalAttributes(testObj)
 	if err != nil {
-		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
 
 	expected := testAttrsWithNilSets()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(attrs, gocheck.DeepEquals, expected)
 }
 
-func TestMarshalEmptySets(t *testing.T) {
+func (s *MarshallerSuite) TestMarshalZeroValues(c *gocheck.C) {
+	testObj := testObjectWithZeroValues()
+	attrs, err := dynamodb.MarshalAttributes(testObj)
+	if err != nil {
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+	}
+
+	expected := testAttrsWithZeroValues()
+	c.Check(attrs, gocheck.DeepEquals, expected)
+}
+
+func (s *MarshallerSuite) TestMarshalEmptySets(c *gocheck.C) {
 	testObj := testObjectWithEmptySets()
 	attrs, err := dynamodb.MarshalAttributes(testObj)
 	if err != nil {
-		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
 
 	expected := testAttrsWithNilSets()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(attrs, gocheck.DeepEquals, expected)
 }
 
-func TestUnmarshalEmptySets(t *testing.T) {
+func (s *MarshallerSuite) TestUnmarshalEmptySets(c *gocheck.C) {
 	testObj := &TestStruct{}
 
 	attrMap := map[string]*dynamodb.Attribute{}
@@ -213,11 +274,9 @@ func TestUnmarshalEmptySets(t *testing.T) {
 
 	err := dynamodb.UnmarshalAttributes(&attrMap, testObj)
 	if err != nil {
-		t.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
+		c.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
 	}
 
 	expected := testObjectWithNilSets()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
-		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(testObj, gocheck.DeepEquals, expected)
 }

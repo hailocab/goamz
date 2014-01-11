@@ -1,106 +1,64 @@
 package dynamodb_test
 
 import (
-	"flag"
-	"fmt"
-	"github.com/hailocab/goamz/aws"
 	"github.com/hailocab/goamz/dynamodb"
-	"testing"
+	"launchpad.net/gocheck"
 )
 
-var amazon = flag.Bool("amazon", false, "Enable tests against amazon server")
-
-func TestListTables(t *testing.T) {
-	if !*amazon {
-		t.Log("Amazon tests not enabled")
-		return
-	}
-
-	auth, err := aws.EnvAuth()
-
-	if err != nil {
-		t.Log(err)
-		t.FailNow()
-	}
-
-	server := dynamodb.Server{auth, aws.USEast}
-
-	tables, err := server.ListTables()
-
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	if len(tables) == 0 {
-		t.Log("Expected table to be returned")
-		t.FailNow()
-	}
-
-	fmt.Printf("tables %s\n", tables)
-
+type TableSuite struct {
+	TableDescriptionT dynamodb.TableDescriptionT
+	DynamoDBTest
 }
 
-func TestGetItem(t *testing.T) {
-	if !*amazon {
-		t.Log("Amazon tests not enabled")
-		return
-	}
-
-	auth, err := aws.EnvAuth()
-
+func (s *TableSuite) SetUpSuite(c *gocheck.C) {
+	setUpAuth(c)
+	s.DynamoDBTest.TableDescriptionT = s.TableDescriptionT
+	s.server = &dynamodb.Server{dynamodb_auth, dynamodb_region}
+	pk, err := s.TableDescriptionT.BuildPrimaryKey()
 	if err != nil {
-		t.Log(err)
-		t.FailNow()
+		c.Skip(err.Error())
 	}
+	s.table = s.server.NewTable(s.TableDescriptionT.TableName, pk)
 
-	server := dynamodb.Server{auth, aws.USEast}
-	primary := dynamodb.NewStringAttribute("domain", "")
-	key := dynamodb.PrimaryKey{primary, nil}
-	table := server.NewTable("production_storyarc-accelerator-sites",
-		key)
-
-	item, err := table.GetItem(&dynamodb.Key{HashKey: "ac-news.speedup.storytellerhq.com"})
-
-	if err != nil {
-		t.Log(err)
-		t.FailNow()
-	}
-
-	fmt.Printf("Item : %s\n", item)
-
+	// Cleanup
+	s.TearDownSuite(c)
 }
 
-func TestGetItemRange(t *testing.T) {
-	if !*amazon {
-		return
-	}
+var table_suite = &TableSuite{
+	TableDescriptionT: dynamodb.TableDescriptionT{
+		TableName: "DynamoDBTestMyTable",
+		AttributeDefinitions: []dynamodb.AttributeDefinitionT{
+			dynamodb.AttributeDefinitionT{"TestHashKey", "S"},
+			dynamodb.AttributeDefinitionT{"TestRangeKey", "N"},
+		},
+		KeySchema: []dynamodb.KeySchemaT{
+			dynamodb.KeySchemaT{"TestHashKey", "HASH"},
+			dynamodb.KeySchemaT{"TestRangeKey", "RANGE"},
+		},
+		ProvisionedThroughput: dynamodb.ProvisionedThroughputT{
+			ReadCapacityUnits:  1,
+			WriteCapacityUnits: 1,
+		},
+	},
+}
 
-	if !*amazon {
-		t.Log("Amazon tests not enabled")
-		return
-	}
+var _ = gocheck.Suite(table_suite)
 
-	auth, err := aws.EnvAuth()
-
+func (s *TableSuite) TestCreateListTable(c *gocheck.C) {
+	status, err := s.server.CreateTable(s.TableDescriptionT)
 	if err != nil {
-		t.Log(err)
-		t.FailNow()
+		c.Fatal(err)
+	}
+	if status != "ACTIVE" && status != "CREATING" {
+		c.Error("Expect status to be ACTIVE or CREATING")
 	}
 
-	server := dynamodb.Server{auth, aws.USEast}
-	primary := dynamodb.NewStringAttribute("uuid_type", "")
-	rangeK := dynamodb.NewNumericAttribute("time", "")
-	key := dynamodb.PrimaryKey{primary, rangeK}
-	table := server.NewTable("production_storyarc-accelerator-analytics",
-		key)
+	s.WaitUntilStatus(c, "ACTIVE")
 
-	item, err := table.GetItem(&dynamodb.Key{HashKey: "aee5df14-6961-4baa-bad1-a1150576594f_MISSES", RangeKey: "1348187524"})
-
+	tables, err := s.server.ListTables()
 	if err != nil {
-		t.Log(err)
-		t.FailNow()
+		c.Fatal(err)
 	}
-
-	fmt.Printf("Item : %s\n", item)
-
+	c.Check(len(tables), gocheck.Not(gocheck.Equals), 0)
+	c.Check(findTableByName(tables, s.TableDescriptionT.TableName), gocheck.Equals, true)
 }
