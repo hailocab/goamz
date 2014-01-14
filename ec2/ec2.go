@@ -250,15 +250,15 @@ type Instance struct {
 }
 
 type BlockDevice struct {
-	DeviceName         string        `xml:"deviceName"`
-	EBS EBS `xml:"ebs"`
+	DeviceName string `xml:"deviceName"`
+	EBS        EBS    `xml:"ebs"`
 }
 
 type EBS struct {
-	VolumeId string `xml:"volumeId"`
-	Status string `xml:"status"`
-	AttachTime string `xml:"attachTime"`
-	DeleteOnTermination bool `xml:"deleteOnTermination"`
+	VolumeId            string `xml:"volumeId"`
+	Status              string `xml:"status"`
+	AttachTime          string `xml:"attachTime"`
+	DeleteOnTermination bool   `xml:"deleteOnTermination"`
 }
 
 // RunInstances starts new instances in EC2.
