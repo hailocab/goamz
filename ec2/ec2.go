@@ -242,6 +242,7 @@ type Instance struct {
 	Monitoring         string              `xml:"monitoring>state"`
 	IamInstanceProfile IamInstanceProfile  `xml:"iamInstanceProfile"`
 	LaunchTime         string              `xml:"launchTime"`
+	OwnerId            string              // This isn't currently returned in the response, and is taken from the parent reservation
 
 	// More specific information
 	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
@@ -722,6 +723,16 @@ func (ec2 *EC2) DescribeInstances(instIds []string, filter *Filter) (resp *Insta
 	if err != nil {
 		return nil, err
 	}
+
+	// Add additional parameters to instances which aren't available in the response
+	for i, rsv := range resp.Reservations {
+		ownerId := rsv.OwnerId
+		for j, inst := range rsv.Instances {
+			inst.OwnerId = ownerId
+			resp.Reservations[i].Instances[j] = inst
+		}
+	}
+
 	return
 }
 
