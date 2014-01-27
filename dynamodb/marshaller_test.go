@@ -33,8 +33,8 @@ type TestStruct struct {
 }
 
 func testObject() *TestStruct {
-  t, _ := time.Parse("Jan 2, 2006 at 3:04pm (GMT)", "Mar 3, 2003 at 5:03pm (GMT)")
-	
+	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (GMT)", "Mar 3, 2003 at 5:03pm (GMT)")
+
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
