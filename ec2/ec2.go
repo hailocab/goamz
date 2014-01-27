@@ -202,7 +202,7 @@ type RunInstancesOptions struct {
 	KernelId               string
 	RamdiskId              string
 	UserData               []byte
-	AvailZone              string
+	AvailabilityZone       string
 	PlacementGroupName     string
 	Monitoring             bool
 	SubnetId               string
@@ -229,36 +229,121 @@ type RunInstancesResp struct {
 //
 // See http://goo.gl/OCH8a for more details.
 type Instance struct {
-	InstanceId         string        `xml:"instanceId"`
-	InstanceType       string        `xml:"instanceType"`
-	ImageId            string        `xml:"imageId"`
-	PrivateDNSName     string        `xml:"privateDnsName"`
-	DNSName            string        `xml:"dnsName"`
-	IPAddress          string        `xml:"ipAddress"`
-	PrivateIPAddress   string        `xml:"privateIpAddress"`
-	KeyName            string        `xml:"keyName"`
-	AMILaunchIndex     int           `xml:"amiLaunchIndex"`
-	Hypervisor         string        `xml:"hypervisor"`
-	VirtType           string        `xml:"virtualizationType"`
-	Monitoring         string        `xml:"monitoring>state"`
-	AvailZone          string        `xml:"placement>availabilityZone"`
-	PlacementGroupName string        `xml:"placement>groupName"`
-	State              InstanceState `xml:"instanceState"`
-	Tags               []Tag         `xml:"tagSet>item"`
-	IamInstanceProfile string        `xml:"iamInstanceProfile"`
-	BlockDevices       []BlockDevice `xml:"blockDeviceMapping>item"`
+
+	// General instance information
+	InstanceId         string              `xml:"instanceId"`
+	InstanceType       string              `xml:"instanceType"`
+	AvailabilityZone   string              `xml:"placement>availabilityZone"`
+	Tags               []Tag               `xml:"tagSet>item"`
+	State              InstanceState       `xml:"instanceState"`
+	StateReason        InstanceStateReason `xml:"stateReason"`
+	ImageId            string              `xml:"imageId"`
+	KeyName            string              `xml:"keyName"`
+	Monitoring         string              `xml:"monitoring>state"`
+	IamInstanceProfile IamInstanceProfile  `xml:"iamInstanceProfile"`
+	LaunchTime         string              `xml:"launchTime"`
+	OwnerId            string              // This isn't currently returned in the response, and is taken from the parent reservation
+
+	// More specific information
+	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
+	Hypervisor            string `xml:"hypervisor"`            // Valid values: ovm | xen
+	VirtualizationType    string `xml:"virtualizationType"`    // Valid values: paravirtual | hvm
+	AMILaunchIndex        int    `xml:"amiLaunchIndex"`        // The AMI launch index, which can be used to find this instance in the launch group.
+	PlacementGroupName    string `xml:"placement>groupName"`   // The name of the placement group the instance is in (for cluster compute instances)
+	Tenancy               string `xml:"placement>tenancy"`     // (VPC only) Valid values: default | dedicated
+	InstanceLifecycle     string `xml:"instanceLifecycle"`     // Spot instance? Valid values: "spot" or blank
+	SpotInstanceRequestId string `xml:"spotInstanceRequestId"` // The ID of the Spot Instance request
+
+	// Storage
+	BlockDevices []BlockDevice `xml:"blockDeviceMapping>item"`
+	EbsOptimized bool          `xml:"ebsOptimized"`
+
+	// Network
+	DNSName          string          `xml:"dnsName"`
+	PrivateDNSName   string          `xml:"privateDnsName"`
+	IPAddress        string          `xml:"ipAddress"`
+	PrivateIPAddress string          `xml:"privateIpAddress"`
+	SubnetId         string          `xml:"subnetId"`
+	VpcId            string          `xml:"vpcId"`
+	SecurityGroups   []SecurityGroup `xml:"groupSet>item"`
+
+	// Advanced Networking
+	NetworkInterfaces []InstanceNetworkInterface `xml:"networkInterfaceSet>item"`
+	SourceDestCheck   bool                       `xml:"sourceDestCheck"`
+	SriovNetSupport   string                     `xml:"sriovNetSupport"`
+}
+
+// isSpotInstance returns if the instance is a spot instance
+func (i Instance) isSpotInstance() bool {
+	if i.InstanceLifecycle == "spot" {
+		return true
+	}
+	return false
 }
 
 type BlockDevice struct {
-	DeviceName         string        `xml:"deviceName"`
-	EBS EBS `xml:"ebs"`
+	DeviceName string `xml:"deviceName"`
+	EBS        EBS    `xml:"ebs"`
 }
 
 type EBS struct {
-	VolumeId string `xml:"volumeId"`
-	Status string `xml:"status"`
-	AttachTime string `xml:"attachTime"`
-	DeleteOnTermination bool `xml:"deleteOnTermination"`
+	VolumeId            string `xml:"volumeId"`
+	Status              string `xml:"status"`
+	AttachTime          string `xml:"attachTime"`
+	DeleteOnTermination bool   `xml:"deleteOnTermination"`
+}
+
+// InstanceNetworkInterface represents a network interface attached to an instance
+// See http://goo.gl/9eW02N for more details.
+type InstanceNetworkInterface struct {
+	Id                 string                              `xml:"networkInterfaceId"`
+	Description        string                              `xml:"description"`
+	SubnetId           string                              `xml:"subnetId"`
+	VpcId              string                              `xml:"vpcId"`
+	OwnerId            string                              `xml:"ownerId"` // The ID of the AWS account that created the network interface.
+	Status             string                              `xml:"status"`  // Valid values: available | attaching | in-use | detaching
+	MacAddress         string                              `xml:"macAddress"`
+	PrivateIPAddress   string                              `xml:"privateIpAddress"`
+	PrivateDNSName     string                              `xml:"privateDnsName"`
+	SourceDestCheck    bool                                `xml:"sourceDestCheck"`
+	SecurityGroups     []SecurityGroup                     `xml:"groupSet>item"`
+	Attachment         InstanceNetworkInterfaceAttachment  `xml:"attachment"`
+	Association        InstanceNetworkInterfaceAssociation `xml:"association"`
+	PrivateIPAddresses []InstancePrivateIpAddress          `xml:"privateIpAddressesSet>item"`
+}
+
+// InstanceNetworkInterfaceAttachment describes a network interface attachment to an instance
+// See http://goo.gl/0ql0Cg for more details
+type InstanceNetworkInterfaceAttachment struct {
+	AttachmentID        string `xml:"attachmentID"`        // The ID of the network interface attachment.
+	DeviceIndex         int32  `xml:"deviceIndex"`         // The index of the device on the instance for the network interface attachment.
+	Status              string `xml:"status"`              // Valid values: attaching | attached | detaching | detached
+	AttachTime          string `xml:"attachTime"`          // Time attached, as a Datetime
+	DeleteOnTermination bool   `xml:"deleteOnTermination"` // Indicates whether the network interface is deleted when the instance is terminated.
+}
+
+// Describes association information for an Elastic IP address.
+// See http://goo.gl/YCDdMe for more details
+type InstanceNetworkInterfaceAssociation struct {
+	PublicIP      string `xml:"publicIp"`      // The address of the Elastic IP address bound to the network interface
+	PublicDNSName string `xml:"publicDnsName"` // The public DNS name
+	IPOwnerId     string `xml:"ipOwnerId"`     // The ID of the owner of the Elastic IP address
+}
+
+// InstancePrivateIpAddress describes a private IP address
+// See http://goo.gl/irN646 for more details
+type InstancePrivateIpAddress struct {
+	PrivateIPAddress string                              `xml:"privateIpAddress"` // The private IP address of the network interface
+	PrivateDNSName   string                              `xml:"privateDnsName"`   // The private DNS name
+	Primary          bool                                `xml:"primary"`          // Indicates whether this IP address is the primary private IP address of the network interface
+	Association      InstanceNetworkInterfaceAssociation `xml:"association"`      // The association information for an Elastic IP address for the network interface
+}
+
+// IamInstanceProfile
+// See http://goo.gl/PjyijL for more details
+type IamInstanceProfile struct {
+	ARN string `xml:"arn"`
+	Id  string `xml:"id"`
 }
 
 // RunInstances starts new instances in EC2.
@@ -339,8 +424,8 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 		b64.Encode(userData, options.UserData)
 		params["UserData"] = string(userData)
 	}
-	if options.AvailZone != "" {
-		params["Placement.AvailabilityZone"] = options.AvailZone
+	if options.AvailabilityZone != "" {
+		params["Placement.AvailabilityZone"] = options.AvailabilityZone
 	}
 	if options.PlacementGroupName != "" {
 		params["Placement.GroupName"] = options.PlacementGroupName
@@ -408,6 +493,14 @@ type InstanceStateChange struct {
 	InstanceId    string        `xml:"instanceId"`
 	CurrentState  InstanceState `xml:"currentState"`
 	PreviousState InstanceState `xml:"previousState"`
+}
+
+// InstanceStateReason describes a state change for an instance in EC2
+//
+// See http://goo.gl/KZkbXi for more details
+type InstanceStateReason struct {
+	Code    string `xml:"code"`
+	Message string `xml:"message"`
 }
 
 // TerminateInstances requests the termination of instances when the given ids.
@@ -621,7 +714,7 @@ type Reservation struct {
 // matching the given instance ids or filtering rules.
 //
 // See http://goo.gl/4No7c for more details.
-func (ec2 *EC2) Instances(instIds []string, filter *Filter) (resp *InstancesResp, err error) {
+func (ec2 *EC2) DescribeInstances(instIds []string, filter *Filter) (resp *InstancesResp, err error) {
 	params := makeParams("DescribeInstances")
 	addParamsList(params, "InstanceId", instIds)
 	filter.addParams(params)
@@ -630,6 +723,16 @@ func (ec2 *EC2) Instances(instIds []string, filter *Filter) (resp *InstancesResp
 	if err != nil {
 		return nil, err
 	}
+
+	// Add additional parameters to instances which aren't available in the response
+	for i, rsv := range resp.Reservations {
+		ownerId := rsv.OwnerId
+		for j, inst := range rsv.Instances {
+			inst.OwnerId = ownerId
+			resp.Reservations[i].Instances[j] = inst
+		}
+	}
+
 	return
 }
 
