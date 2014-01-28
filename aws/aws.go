@@ -24,8 +24,9 @@ import (
 
 // Defines the valid signers
 const (
-	V2Signature = iota
-	V4Signature = iota
+	V2Signature      = iota
+	V4Signature      = iota
+	Route53Signature = iota
 )
 
 // Defines the service endpoint and correct Signer implementation to use
@@ -129,6 +130,7 @@ func (s *Service) Query(method, path string, params map[string]string) (resp *ht
 	} else if method == "POST" {
 		resp, err = http.PostForm(u.String(), multimap(params))
 	}
+
 	return
 }
 

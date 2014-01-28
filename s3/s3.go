@@ -36,7 +36,9 @@ const debug = false
 type S3 struct {
 	aws.Auth
 	aws.Region
-	private byte // Reserve the right of using private data.
+	ConnectTimeout time.Duration
+	ReadTimeout    time.Duration
+	private        byte // Reserve the right of using private data.
 }
 
 // The Bucket type encapsulates operations with an S3 bucket.
@@ -54,14 +56,14 @@ type Owner struct {
 // Fold options into an Options struct
 //
 type Options struct {
-	SSE             bool
-	Meta            map[string][]string
-	ContentEncoding string
+	SSE              bool
+	Meta             map[string][]string
+	ContentEncoding  string
+	CacheControl     string
+	RedirectLocation string
 	// What else?
-	// Cache-Control string
 	// Content-Disposition string
 	//// The following become headers so they are []strings rather than strings... I think
-	// x-amz-website-redirect-location: []string
 	// x-amz-storage-class []string
 }
 
@@ -73,7 +75,7 @@ var attempts = aws.AttemptStrategy{
 
 // New creates a new S3.
 func New(auth aws.Auth, region aws.Region) *S3 {
-	return &S3{auth, region, 0}
+	return &S3{auth, region, 0, 0, 0}
 }
 
 // Bucket returns a Bucket with the given name.
@@ -291,6 +293,12 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	}
 	if len(options.ContentEncoding) != 0 {
 		headers["Content-Encoding"] = []string{options.ContentEncoding}
+	}
+	if len(options.CacheControl) != 0 {
+		headers["Cache-Control"] = []string{options.CacheControl}
+	}
+	if len(options.RedirectLocation) != 0 {
+		headers["x-amz-website-redirect-location"] = []string{options.RedirectLocation}
 	}
 	for k, v := range options.Meta {
 		headers["x-amz-meta-"+k] = v
@@ -723,7 +731,27 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		hreq.Body = ioutil.NopCloser(req.payload)
 	}
 
-	hresp, err := http.DefaultClient.Do(&hreq)
+	c := http.Client{
+		Transport: &http.Transport{
+			Dial: func(netw, addr string) (c net.Conn, err error) {
+				deadline := time.Now().Add(s3.ReadTimeout)
+				if s3.ConnectTimeout > 0 {
+					c, err = net.DialTimeout(netw, addr, s3.ConnectTimeout)
+				} else {
+					c, err = net.Dial(netw, addr)
+				}
+				if err != nil {
+					return
+				}
+				if s3.ReadTimeout > 0 {
+					err = c.SetDeadline(deadline)
+				}
+				return
+			},
+		},
+	}
+
+	hresp, err := c.Do(&hreq)
 	if err != nil {
 		return nil, err
 	}
