@@ -55,3 +55,53 @@ var DescribeDBInstancesExample1 = `
   </ResponseMetadata>
 </DescribeDBInstancesResponse>
 `
+
+var CreateDBInstanceExample1 = `
+<CreateDBInstanceResponse xmlns="http://rds.amazonaws.com/doc/2013-09-09/">
+  <CreateDBInstanceResult>
+    <DBInstance>
+      <BackupRetentionPeriod>1</BackupRetentionPeriod>
+      <MultiAZ>false</MultiAZ>
+      <DBInstanceStatus>creating</DBInstanceStatus>
+      <VpcSecurityGroups/>
+      <DBInstanceIdentifier>bobloblawlawblog01</DBInstanceIdentifier>
+      <PreferredBackupWindow>01:24-01:54</PreferredBackupWindow>
+      <PreferredMaintenanceWindow>wed:02:47-wed:03:17</PreferredMaintenanceWindow>
+      <AvailabilityZone>us-east-1a</AvailabilityZone>
+      <ReadReplicaDBInstanceIdentifiers/>
+      <Engine>mysql</Engine>
+      <PendingModifiedValues>
+        <MasterUserPassword>****</MasterUserPassword>
+      </PendingModifiedValues>
+      <LicenseModel>general-public-license</LicenseModel>
+      <EngineVersion>5.6.13</EngineVersion>
+      <DBParameterGroups>
+        <DBParameterGroup>
+          <ParameterApplyStatus>in-sync</ParameterApplyStatus>
+          <DBParameterGroupName>default.mysql5.6</DBParameterGroupName>
+        </DBParameterGroup>
+      </DBParameterGroups>
+      <OptionGroupMemberships>
+        <OptionGroupMembership>
+          <OptionGroupName>default:mysql-5-6</OptionGroupName>
+          <Status>in-sync</Status>
+        </OptionGroupMembership>
+      </OptionGroupMemberships>
+      <PubliclyAccessible>true</PubliclyAccessible>
+      <DBSecurityGroups>
+        <DBSecurityGroup>
+          <Status>active</Status>
+          <DBSecurityGroupName>default</DBSecurityGroupName>
+        </DBSecurityGroup>
+      </DBSecurityGroups>
+      <AutoMinorVersionUpgrade>false</AutoMinorVersionUpgrade>
+      <AllocatedStorage>5</AllocatedStorage>
+      <MasterUsername>bobloblaw</MasterUsername>
+      <DBInstanceClass>db.t1.micro</DBInstanceClass>
+    </DBInstance>
+  </CreateDBInstanceResult>
+  <ResponseMetadata>
+    <RequestId>25a74649-8c57-11e3-b457-75a518426ed7</RequestId>
+  </ResponseMetadata>
+</CreateDBInstanceResponse>
+`

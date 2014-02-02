@@ -74,3 +74,49 @@ func (s *S) TestDescribeDBInstancesExample1(c *gocheck.C) {
 	c.Assert(db0.PreferredMaintenanceWindow, gocheck.Equals, "sat:07:30-sat:08:00")
 	c.Assert(db0.PubliclyAccessible, gocheck.Equals, false)
 }
+
+func (s *S) TestCreateDBInstancePublicExample1(c *gocheck.C) {
+	testServer.Response(200, nil, CreateDBInstanceExample1)
+
+	options := &rds.CreateDBInstanceOptions{
+		AllocatedStorage:     5,
+		AvailabilityZone:     "us-east-1a",
+		DBInstanceClass:      "db.t1.micro",
+		DBInstanceIdentifier: "bobloblawlawblog01",
+		Engine:               "MySQL",
+		MasterUserPassword:   "lawbombs",
+		MasterUsername:       "bobloblaw",
+		PubliclyAccessible:   true,
+	}
+
+	resp, err := s.rds.CreateDBInstance(options)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"CreateDBInstance"})
+	c.Assert(req.Form["AllocatedStorage"], gocheck.DeepEquals, []string{"5"})
+	c.Assert(req.Form["AvailabilityZone"], gocheck.DeepEquals, []string{"us-east-1a"})
+	c.Assert(req.Form["DBInstanceIdentifier"], gocheck.DeepEquals, []string{"bobloblawlawblog01"})
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(resp.RequestId, gocheck.Equals, "25a74649-8c57-11e3-b457-75a518426ed7")
+
+	db := resp.DBInstance
+	c.Assert(db.AllocatedStorage, gocheck.Equals, 5)
+	c.Assert(db.AutoMinorVersionUpgrade, gocheck.Equals, false)
+	c.Assert(db.AvailabilityZone, gocheck.Equals, "us-east-1a")
+	c.Assert(db.BackupRetentionPeriod, gocheck.Equals, 1)
+	c.Assert(db.DBInstanceClass, gocheck.Equals, "db.t1.micro")
+	c.Assert(db.DBInstanceIdentifier, gocheck.Equals, "bobloblawlawblog01")
+	c.Assert(db.Engine, gocheck.Equals, "mysql")
+	c.Assert(db.EngineVersion, gocheck.Equals, "5.6.13")
+	c.Assert(db.Iops, gocheck.Equals, 0) // Iops Disabled
+	c.Assert(db.MasterUsername, gocheck.Equals, "bobloblaw")
+	c.Assert(db.MultiAZ, gocheck.Equals, false)
+	c.Assert(db.OptionGroupMemberships, gocheck.HasLen, 1)
+	c.Assert(db.OptionGroupMemberships[0].Name, gocheck.Equals, "default:mysql-5-6")
+	c.Assert(db.OptionGroupMemberships[0].Status, gocheck.Equals, "in-sync")
+	c.Assert(db.PreferredBackupWindow, gocheck.Equals, "01:24-01:54")
+	c.Assert(db.PreferredMaintenanceWindow, gocheck.Equals, "wed:02:47-wed:03:17")
+	c.Assert(db.PubliclyAccessible, gocheck.Equals, true)
+	c.Assert(db.VpcSecurityGroups, gocheck.HasLen, 1)
+}
