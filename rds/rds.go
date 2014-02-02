@@ -122,8 +122,7 @@ type CreateDBInstanceOptions struct {
 	PreferredBackupWindow      string   // Specifies the daily time range during which automated backups are created if automated backups are enabled, as determined by the BackupRetentionPeriod.
 	PreferredMaintenanceWindow string   // Specifies the weekly time range (in UTC) during which system maintenance can occur.
 	PubliclyAccessible         bool     // Specifies the accessibility options for the DB instance. A value of true specifies an Internet-facing instance with a publicly resolvable DNS name, which resolves to a public IP address. A value of false specifies an internal instance with a DNS name that resolves to a private IP address.
-	// Tags                       []Tag    // A series of tags to apply to the instance
-	VpcSecurityGroupIds []string // A list of EC2 VPC security groups to associate with this DB instance.
+	VpcSecurityGroupIds        []string // A list of EC2 VPC security groups to associate with this DB instance.
 }
 
 // Response to a CreateDBInstance request
@@ -165,13 +164,11 @@ func (rds *RDS) CreateDBInstance(options *CreateDBInstanceOptions) (resp *Create
 	if options.DBParameterGroupName != "" {
 		params["DBParameterGroupName"] = options.DBParameterGroupName
 	}
-
 	for i, sg := range options.DBSecurityGroups {
 		if sg != "" {
 			params["DBSecurityGroups.member."+strconv.Itoa(i+1)] = sg
 		}
 	}
-
 	if options.DBSubnetGroupName != "" {
 		params["DBSubnetGroupName"] = options.DBSubnetGroupName
 	}
@@ -207,11 +204,6 @@ func (rds *RDS) CreateDBInstance(options *CreateDBInstanceOptions) (resp *Create
 		params["PreferredMaintenanceWindow"] = options.PreferredMaintenanceWindow
 	}
 	params["PubliclyAccessible"] = strconv.FormatBool(options.PubliclyAccessible)
-
-	// @todo Docs don't detail marshaling for tags?
-	// for i, t := range options.Tags {
-	// 	params["Tags.member."+strconv.Itoa(i+1)] = t
-	// }
 
 	for i, g := range options.VpcSecurityGroupIds {
 		if g != "" {
