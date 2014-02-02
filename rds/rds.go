@@ -219,3 +219,38 @@ func (rds *RDS) CreateDBInstance(options *CreateDBInstanceOptions) (resp *Create
 	return
 
 }
+
+// Response to a DeleteDBInstance request
+//
+// See http://goo.gl/P6xuwf for more details.
+type DeleteDBInstanceResponse struct {
+	DBInstance DBInstance `xml:"DeleteDBInstanceResult>DBInstance"`
+	RequestId  string     `xml:"ResponseMetadata>RequestId"`
+}
+
+// DeleteDBInstance deletes a previously provisioned DB instance
+// A successful response from the web service indicates the request was received correctly.
+// When you delete a DB instance, all automated backups for that instance are deleted and
+// cannot be recovered. Manual DB snapshots of the DB instance to be deleted are not deleted.
+//
+// If a final DB snapshot is requested the status of the RDS instance will be "deleting"
+// until the DB snapshot is created. The API action DescribeDBInstance is used to monitor
+// the status of this operation. The action cannot be canceled or reverted once submitted.
+//
+// See http://goo.gl/P6xuwf for more details.
+func (rds *RDS) DeleteDBInstance(id string, finalDBSnapshotIdentifier string, skipFinalSnapshot bool) (resp *DeleteDBInstanceResponse, err error) {
+	params := aws.MakeParams("DeleteDBInstance")
+
+	params["DBInstanceIdentifier"] = id
+	if finalDBSnapshotIdentifier != "" {
+		params["FinalDBSnapshotIdentifier"] = finalDBSnapshotIdentifier
+	}
+	params["SkipFinalSnapshot"] = strconv.FormatBool(skipFinalSnapshot)
+
+	resp = &DeleteDBInstanceResponse{}
+	err = rds.query("POST", "/", params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
