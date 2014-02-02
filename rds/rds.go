@@ -94,3 +94,136 @@ func (rds *RDS) DescribeDBInstances(id string, maxRecords int, marker string) (*
 	err := rds.query("POST", "/", params, resp)
 	return resp, err
 }
+
+// CreateDBInstanceOptions describes the options used to create a new Database Instance
+//
+// See http://goo.gl/yFxFL9 for more details.
+type CreateDBInstanceOptions struct {
+	AllocatedStorage           int      // Specifies the allocated storage size specified in gigabytes.
+	AutoMinorVersionUpgrade    bool     // Indicates that minor version patches are applied automatically.
+	AvailabilityZone           string   // Specifies the name of the Availability Zone the DB instance is located in.
+	BackupRetentionPeriod      int      // Specifies the number of days for which automatic DB snapshots are retained.
+	CharacterSetName           string   // If present, specifies the name of the character set that this instance is associated with.
+	DBInstanceClass            string   // Contains the name of the compute and memory capacity class of the DB instance.
+	DBInstanceIdentifier       string   // Contains a user-supplied database identifier. This is the unique key that identifies a DB instance.
+	DBName                     string   // The meaning of this parameter differs according to the database engine you use.
+	DBParameterGroupName       string   // The name of a DB parameter group to be associated with this DB instance
+	DBSecurityGroups           []string // A list of DB security group IDs to associate with this DB instance
+	DBSubnetGroupName          string   // A DB subnet group to associate with this DB instance
+	Engine                     string   // Provides the name of the database engine to be used for this DB instance.
+	EngineVersion              string   // Indicates the database engine version.
+	Iops                       int      // Specifies the Provisioned IOPS (I/O operations per second) value.
+	LicenseModel               string   // License model information for this DB instance.
+	MasterUserPassword         string   // The password for the master database user. Can be any printable ASCII character except "/", """, or "@"
+	MasterUsername             string   // Contains the master username for the DB instance.
+	MultiAZ                    bool     // Specifies if the DB instance is a Multi-AZ deployment.
+	OptionGroupName            string   // Provides the list of option group memberships for this DB instance.
+	Port                       int      // The port to listen on
+	PreferredBackupWindow      string   // Specifies the daily time range during which automated backups are created if automated backups are enabled, as determined by the BackupRetentionPeriod.
+	PreferredMaintenanceWindow string   // Specifies the weekly time range (in UTC) during which system maintenance can occur.
+	PubliclyAccessible         bool     // Specifies the accessibility options for the DB instance. A value of true specifies an Internet-facing instance with a publicly resolvable DNS name, which resolves to a public IP address. A value of false specifies an internal instance with a DNS name that resolves to a private IP address.
+	// Tags                       []Tag    // A series of tags to apply to the instance
+	VpcSecurityGroupIds []string // A list of EC2 VPC security groups to associate with this DB instance.
+}
+
+// Response to a CreateDBInstance request
+//
+// See http://goo.gl/yFxFL9 for more details.
+type CreateDBInstanceResponse struct {
+	DBInstance DBInstance `xml:"CreateDBInstanceResult>DBInstance"`
+	RequestId  string     `xml:"ResponseMetadata>RequestId"`
+}
+
+// CreateDBInstance starts a new database instance in RDS.
+//
+// See http://goo.gl/yFxFL9 for more details.
+func (rds *RDS) CreateDBInstance(options *CreateDBInstanceOptions) (resp *CreateDBInstanceResponse, err error) {
+	params := aws.MakeParams("CreateDBInstance")
+
+	if options.AllocatedStorage != 0 {
+		params["AllocatedStorage"] = strconv.Itoa(options.AllocatedStorage)
+	}
+	params["AutoMinorVersionUpgrade"] = strconv.FormatBool(options.AutoMinorVersionUpgrade)
+	if options.AvailabilityZone != "" {
+		params["AvailabilityZone"] = options.AvailabilityZone
+	}
+	if options.BackupRetentionPeriod != 0 {
+		params["BackupRetentionPeriod"] = strconv.Itoa(options.BackupRetentionPeriod)
+	}
+	if options.CharacterSetName != "" {
+		params["CharacterSetName"] = options.CharacterSetName
+	}
+	if options.DBInstanceClass != "" {
+		params["DBInstanceClass"] = options.DBInstanceClass
+	}
+	if options.DBInstanceIdentifier != "" {
+		params["DBInstanceIdentifier"] = options.DBInstanceIdentifier
+	}
+	if options.DBName != "" {
+		params["DBName"] = options.DBName
+	}
+	if options.DBParameterGroupName != "" {
+		params["DBParameterGroupName"] = options.DBParameterGroupName
+	}
+
+	for i, sg := range options.DBSecurityGroups {
+		if sg != "" {
+			params["DBSecurityGroups.member."+strconv.Itoa(i+1)] = sg
+		}
+	}
+
+	if options.DBSubnetGroupName != "" {
+		params["DBSubnetGroupName"] = options.DBSubnetGroupName
+	}
+	if options.Engine != "" {
+		params["Engine"] = options.Engine
+	}
+	if options.EngineVersion != "" {
+		params["EngineVersion"] = options.EngineVersion
+	}
+	if options.Iops != 0 {
+		params["Iops"] = strconv.Itoa(options.Iops)
+	}
+	if options.LicenseModel != "" {
+		params["LicenseModel"] = options.LicenseModel
+	}
+	if options.MasterUserPassword != "" {
+		params["MasterUserPassword"] = options.MasterUserPassword
+	}
+	if options.MasterUsername != "" {
+		params["MasterUsername"] = options.MasterUsername
+	}
+	params["MultiAZ"] = strconv.FormatBool(options.MultiAZ)
+	if options.OptionGroupName != "" {
+		params["OptionGroupName"] = options.OptionGroupName
+	}
+	if options.Port != 0 {
+		params["Port"] = strconv.Itoa(options.Port)
+	}
+	if options.PreferredBackupWindow != "" {
+		params["PreferredBackupWindow"] = options.PreferredBackupWindow
+	}
+	if options.PreferredMaintenanceWindow != "" {
+		params["PreferredMaintenanceWindow"] = options.PreferredMaintenanceWindow
+	}
+	params["PubliclyAccessible"] = strconv.FormatBool(options.PubliclyAccessible)
+
+	// @todo Docs don't detail marshaling for tags?
+	// for i, t := range options.Tags {
+	// 	params["Tags.member."+strconv.Itoa(i+1)] = t
+	// }
+
+	for i, g := range options.VpcSecurityGroupIds {
+		if g != "" {
+			params["VpcSecurityGroupIds.member."+strconv.Itoa(i+1)] = g
+		}
+	}
+
+	resp = &CreateDBInstanceResponse{}
+	err = rds.query("POST", "/", params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+
+}
