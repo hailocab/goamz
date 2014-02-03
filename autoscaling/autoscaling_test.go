@@ -633,7 +633,7 @@ func (s *S) TestEnableMetricsCollection(c *gocheck.C) {
 
 func (s *S) TestExecutePolicy(c *gocheck.C) {
 	testServer.Response(200, nil, ExecutePolicy)
-	resp, err := s.as.ExecutePolicy("my-scaleout-policy", "my-test-asg", true)
+	resp, err := s.as.ExecutePolicy("my-scaleout-policy", "my-test-asg",true)
 	c.Assert(err, gocheck.IsNil)
 	values := testServer.WaitRequest().PostForm
 	c.Assert(values.Get("Version"), gocheck.Equals, "2011-01-01")
@@ -660,7 +660,7 @@ func (s *S) TestPutNotificationConfiguration(c *gocheck.C) {
 
 func (s *S) TestPutScalingPolicy(c *gocheck.C) {
 	testServer.Response(200, nil, PutScalingPolicy)
-	resp, err := s.as.PutScalingPolicy("my-scaleout-policy", "my-test-asg", 30, "PercentChangeInCapacity", 0, 0)
+	resp, err := s.as.PutScalingPolicy("my-test-asg","my-scaleout-policy" ,30, "PercentChangeInCapacity", 0, 0)
 	c.Assert(err, gocheck.IsNil)
 	values := testServer.WaitRequest().PostForm
 	c.Assert(values.Get("Version"), gocheck.Equals, "2011-01-01")

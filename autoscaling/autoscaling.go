@@ -1265,7 +1265,7 @@ func (as *AutoScaling) EnableMetricsCollection(asgName string, metrics []string,
 // ExecutePolicy - Executes the specified policy.
 //
 // See http://goo.gl/BxHpFc for more details.
-func (as *AutoScaling) ExecutePolicy(asgName string, policyName string, honorCooldown bool) (resp *GenericResp, err error) {
+func (as *AutoScaling) ExecutePolicy(policyName string, asgName string, honorCooldown bool) (resp *GenericResp, err error) {
 	params := makeParams("ExecutePolicy")
 	params["PolicyName"] = policyName
 
