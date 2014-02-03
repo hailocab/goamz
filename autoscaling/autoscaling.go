@@ -1265,7 +1265,7 @@ func (as *AutoScaling) EnableMetricsCollection(asgName string, metrics []string,
 // ExecutePolicy - Executes the specified policy.
 //
 // See http://goo.gl/BxHpFc for more details.
-func (as *AutoScaling) ExecutePolicy(policyName string, asgName string, honorCooldown bool) (resp *GenericResp, err error) {
+func (as *AutoScaling) ExecutePolicy(asgName string, policyName string, honorCooldown bool) (resp *GenericResp, err error) {
 	params := makeParams("ExecutePolicy")
 	params["PolicyName"] = policyName
 
@@ -1315,10 +1315,10 @@ type PutScalingPolicyResp struct {
 // PutScalingPolicy - Creates or updates a policy for an Auto Scaling group
 //
 // See http://goo.gl/o0E8hl for more details.
-func (as *AutoScaling) PutScalingPolicy(policyName string, asgName string, scalingAdj int, aType string, cooldown int, minAdjStep int) (resp *PutScalingPolicyResp, err error) {
+func (as *AutoScaling) PutScalingPolicy(asgName string, policyName string, scalingAdj int, aType string, cooldown int, minAdjStep int) (resp *PutScalingPolicyResp, err error) {
 	params := makeParams("PutScalingPolicy")
-	params["PolicyName"] = policyName
 	params["AutoScalingGroupName"] = asgName
+	params["PolicyName"] = policyName
 	params["ScalingAdjustment"] = strconv.Itoa(scalingAdj)
 	params["AdjustmentType"] = aType
 
