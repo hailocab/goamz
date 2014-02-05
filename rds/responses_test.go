@@ -16,10 +16,10 @@ var DescribeDBInstancesExample1 = `
         <EngineVersion>5.1.50</EngineVersion>
         <Endpoint>
           <Port>3306</Port>
-          <Address>simcoprod01.cu7u2t4uz396.us-east-1.rds.amazonaws.com</Address>
+          <Address>bobloblawlawblog01.cu7u2t4uz396.us-east-1.rds.amazonaws.com</Address>
         </Endpoint>
-        <DBInstanceIdentifier>simcoprod01</DBInstanceIdentifier>
-        <DBName>simcoprod</DBName>
+        <DBInstanceIdentifier>bobloblawlawblog01</DBInstanceIdentifier>
+        <DBName>lawblog</DBName>
         <DBParameterGroups>
           <DBParameterGroup>
             <ParameterApplyStatus>in-sync</ParameterApplyStatus>

@@ -35,11 +35,11 @@ func (s *S) TearDownTest(c *gocheck.C) {
 func (s *S) TestDescribeDBInstancesExample1(c *gocheck.C) {
 	testServer.Response(200, nil, DescribeDBInstancesExample1)
 
-	resp, err := s.rds.DescribeDBInstances("simcoprod01", 0, "")
+	resp, err := s.rds.DescribeDBInstances("bobloblawlawblog01", 0, "")
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DescribeDBInstances"})
-	c.Assert(req.Form["DBInstanceIdentifier"], gocheck.DeepEquals, []string{"simcoprod01"})
+	c.Assert(req.Form["DBInstanceIdentifier"], gocheck.DeepEquals, []string{"bobloblawlawblog01"})
 
 	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "9135fff3-8509-11e0-bd9b-a7b1ece36d51")
@@ -52,11 +52,11 @@ func (s *S) TestDescribeDBInstancesExample1(c *gocheck.C) {
 	c.Assert(db0.BackupRetentionPeriod, gocheck.Equals, 1)
 
 	c.Assert(db0.DBInstanceClass, gocheck.Equals, "db.m1.large")
-	c.Assert(db0.DBInstanceIdentifier, gocheck.Equals, "simcoprod01")
+	c.Assert(db0.DBInstanceIdentifier, gocheck.Equals, "bobloblawlawblog01")
 	c.Assert(db0.DBInstanceStatus, gocheck.Equals, "available")
-	c.Assert(db0.DBName, gocheck.Equals, "simcoprod")
+	c.Assert(db0.DBName, gocheck.Equals, "lawblog")
 
-	c.Assert(db0.Endpoint.Address, gocheck.Equals, "simcoprod01.cu7u2t4uz396.us-east-1.rds.amazonaws.com")
+	c.Assert(db0.Endpoint.Address, gocheck.Equals, "bobloblawlawblog01.cu7u2t4uz396.us-east-1.rds.amazonaws.com")
 	c.Assert(db0.Endpoint.Port, gocheck.Equals, 3306)
 	c.Assert(db0.Engine, gocheck.Equals, "mysql")
 	c.Assert(db0.EngineVersion, gocheck.Equals, "5.1.50")
