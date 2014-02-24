@@ -418,6 +418,34 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 		}
 	}
 
+	// Add each network interface
+	for i, n := range options.NetworkInterface {
+		params["NetworkInterface."+strconv.Itoa(i)+".DeviceIndex"] = strconv.Itoa(n.DeviceIndex)
+		if n.AssociatePublicIpAddress {
+			params["NetworkInterface."+strconv.Itoa(i)+".AssociatePublicIpAddress"] = "true"
+		}
+		if n.SubnetId != "" {
+			params["NetworkInterface."+strconv.Itoa(i)+".SubnetId"] = n.SubnetId
+		}
+		if n.Description != "" {
+			params["NetworkInterface."+strconv.Itoa(i)+".Description"] = n.Description
+		}
+		if n.PrivateIPAddress != "" {
+			params["NetworkInterface."+strconv.Itoa(i)+".PrivateIPAddress"] = n.PrivateIPAddress
+		}
+		if len(n.SecurityGroups) != 0 {
+			for j, s := range n.SecurityGroups {
+				params["NetworkInterface."+strconv.Itoa(i)+".SecurityGroupId."+strconv.Itoa(j)] = s.Id
+			}
+		}
+		if n.DeleteOnTermination {
+			params["NetworkInterface."+strconv.Itoa(i)+".DeleteOnTermination"] = "true"
+		}
+		if n.SecondaryPrivateIpAddressCount != 0 {
+			params["NetworkInterface."+strconv.Itoa(i)+".SecondaryPrivateIpAddressCount"] = strconv.Itoa(n.SecondaryPrivateIpAddressCount)
+		}
+	}
+
 	token, err := clientToken()
 	if err != nil {
 		return nil, err
