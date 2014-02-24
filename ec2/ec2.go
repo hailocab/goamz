@@ -214,6 +214,8 @@ type RunInstancesOptions struct {
 	BlockDeviceMappings               []BlockDeviceMapping
 	EbsOptimized                      bool
 
+	NetworkInterface []InstanceNetworkInterface
+
 	// Ensure idempotency by providing a token for this request
 	// See http://goo.gl/2wzbKe for more details
 	ClientToken string
@@ -315,6 +317,12 @@ type InstanceNetworkInterface struct {
 	Attachment         InstanceNetworkInterfaceAttachment  `xml:"attachment"`
 	Association        InstanceNetworkInterfaceAssociation `xml:"association"`
 	PrivateIPAddresses []InstancePrivateIpAddress          `xml:"privateIpAddressesSet>item"`
+
+	// Additional fields which can only be specified on the RunInstances method
+	DeviceIndex                    int
+	AssociatePublicIpAddress       bool
+	DeleteOnTermination            bool
+	SecondaryPrivateIpAddressCount int
 }
 
 // InstanceNetworkInterfaceAttachment describes a network interface attachment to an instance
