@@ -54,6 +54,7 @@ type Region struct {
 	DynamoDBEndpoint       string
 	AutoScalingEndpoint    string
 	CloudWatchServicepoint ServiceInfo
+	STSEndpoint            string
 }
 
 var Regions = map[string]Region{
@@ -184,6 +185,16 @@ func (a *Auth) Token() string {
 
 func (a *Auth) Expiration() time.Time {
 	return a.expiration
+}
+
+//To be used with other APIs that return auth credentials such as STS
+func NewAuth(accessKey, secretKey, token string, expiration time.Time) *Auth {
+	return &Auth{
+		AccessKey:  accessKey,
+		SecretKey:  secretKey,
+		token:      token,
+		expiration: expiration,
+	}
 }
 
 // ResponseMetadata
