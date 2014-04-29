@@ -786,6 +786,8 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 	}
 
 	hresp, err := c.Do(&hreq)
+	defer hresp.Body.Close()
+
 	if err != nil {
 		return nil, err
 	}
@@ -798,13 +800,12 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 	}
 	if resp != nil {
 		err = xml.NewDecoder(hresp.Body).Decode(resp)
-		hresp.Body.Close()
 
 		if debug {
 			log.Printf("goamz.s3> decoded xml into %#v", resp)
 		}
-
 	}
+
 	return hresp, err
 }
 
