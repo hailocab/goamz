@@ -313,6 +313,32 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	return b.S3.query(req, nil)
 }
 
+func (b *Bucket) PutCopyFrom(rsp interface{}, path string, from string, perm ACL, options Options) error {
+	fmt.Printf("%+v", path)
+	headers := map[string][]string{
+		"x-amz-acl": {string(perm)},
+	}
+	if options.SSE {
+		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+	}
+
+	for k, v := range options.Meta {
+		headers["x-amz-meta-"+k] = v
+	}
+
+	headers["x-amz-copy-source"] = []string{from}
+
+	req := &request{
+		method:  "PUT",
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+		payload: nil,
+	}
+	fmt.Printf("REQ: %+v", req)
+	return b.S3.query(req, rsp)
+}
+
 type RoutingRule struct {
 	ConditionKeyPrefixEquals     string `xml:"Condition>KeyPrefixEquals"`
 	RedirectReplaceKeyPrefixWith string `xml:"Redirect>ReplaceKeyPrefixWith,omitempty"`
