@@ -135,7 +135,7 @@ func (as *AutoScaling) query(params map[string]string, resp interface{}) error {
 	r, err := http.DefaultClient.Do(hreq)
 
 	if err != nil {
-		log.Printf("Error calling Amazon")
+		log.Printf("Error calling Amazon %v", err)
 		return err
 	}
 
@@ -322,13 +322,10 @@ func (as *AutoScaling) CreateAutoScalingGroup(options *CreateAutoScalingGroup) (
 	params["AutoScalingGroupName"] = options.AutoScalingGroupName
 	params["MaxSize"] = strconv.Itoa(options.MaxSize)
 	params["MinSize"] = strconv.Itoa(options.MinSize)
+	params["DesiredCapacity"] = strconv.Itoa(options.DesiredCapacity)
 
 	if options.DefaultCooldown != 0 {
 		params["DefaultCooldown"] = strconv.Itoa(options.DefaultCooldown)
-	}
-
-	if options.DesiredCapacity != 0 {
-		params["DesiredCapacity"] = strconv.Itoa(options.DesiredCapacity)
 	}
 
 	if options.HealthCheckGracePeriod != 0 {
@@ -1518,21 +1515,12 @@ func (as *AutoScaling) UpdateAutoScalingGroup(options *UpdateAutoScalingGroup) (
 	params := makeParams("UpdateAutoScalingGroup")
 
 	params["AutoScalingGroupName"] = options.AutoScalingGroupName
-
-	if options.MinSize != 0 {
-		params["MaxSize"] = strconv.Itoa(options.MaxSize)
-	}
-
-	if options.MaxSize != 0 {
-		params["MinSize"] = strconv.Itoa(options.MinSize)
-	}
+	params["MaxSize"] = strconv.Itoa(options.MaxSize)
+	params["MinSize"] = strconv.Itoa(options.MinSize)
+	params["DesiredCapacity"] = strconv.Itoa(options.DesiredCapacity)
 
 	if options.DefaultCooldown != 0 {
 		params["DefaultCooldown"] = strconv.Itoa(options.DefaultCooldown)
-	}
-
-	if options.DesiredCapacity != 0 {
-		params["DesiredCapacity"] = strconv.Itoa(options.DesiredCapacity)
 	}
 
 	if options.HealthCheckGracePeriod != 0 {
