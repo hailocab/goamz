@@ -101,6 +101,12 @@ func (s *Route53Signer) Sign(req *http.Request) {
 	authHeader := fmt.Sprintf("AWS3-HTTPS AWSAccessKeyId=%s,Algorithm=%s,Signature=%s",
 		s.auth.AccessKey, "HmacSHA256", s.getHeaderAuthorize(date))
 
+	// Add token header in case we use temp credentials
+	token := s.auth.Token()
+	if token != "" {
+		req.Header.Set("X-Amz-Security-Token", token)
+	}
+
 	req.Header.Set("Host", req.Host)
 	req.Header.Set("X-Amzn-Authorization", authHeader)
 	req.Header.Set("X-Amz-Date", date)
