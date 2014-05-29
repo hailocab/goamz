@@ -562,10 +562,19 @@ func (b *Bucket) URL(path string) string {
 // SignedURL returns a signed URL that allows anyone holding the URL
 // to retrieve the object at path. The signature is valid until expires.
 func (b *Bucket) SignedURL(path string, expires time.Time) string {
+	return b.SignedUrlWithParams(path, expires, url.Values{})
+}
+
+// SignedUrlWithParams is the same as SignedUrl but lets you pass your own request parameters, see:
+// http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
+func (b *Bucket) SignedUrlWithParams(path string, expires time.Time, params url.Values) string {
+	if _, ok := params["Expires"]; !ok {
+		params["Expires"] = []string{strconv.FormatInt(expires.Unix(), 10)}
+	}
 	req := &request{
 		bucket: b.Name,
 		path:   path,
-		params: url.Values{"Expires": {strconv.FormatInt(expires.Unix(), 10)}},
+		params: params,
 	}
 	err := b.S3.prepare(req)
 	if err != nil {
@@ -577,9 +586,8 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	}
 	if b.S3.Auth.Token() != "" {
 		return u.String() + "&x-amz-security-token=" + url.QueryEscape(req.headers["X-Amz-Security-Token"][0])
-	} else {
-		return u.String()
 	}
+	return u.String()
 }
 
 // PostFormArgs returns the action and input fields needed to allow anonymous
