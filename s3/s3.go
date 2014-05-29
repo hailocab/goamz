@@ -562,12 +562,12 @@ func (b *Bucket) URL(path string) string {
 // SignedURL returns a signed URL that allows anyone holding the URL
 // to retrieve the object at path. The signature is valid until expires.
 func (b *Bucket) SignedURL(path string, expires time.Time) string {
-	return b.SignedUrlWithParams(path, expires, url.Values{})
+	return b.SignedURLWithParams(path, expires, url.Values{})
 }
 
-// SignedUrlWithParams is the same as SignedUrl but lets you pass your own request parameters, see:
+// SignedURLWithParams is the same as SignedURL but lets you pass your own request parameters, see:
 // http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html
-func (b *Bucket) SignedUrlWithParams(path string, expires time.Time, params url.Values) string {
+func (b *Bucket) SignedURLWithParams(path string, expires time.Time, params url.Values) string {
 	if _, ok := params["Expires"]; !ok {
 		params["Expires"] = []string{strconv.FormatInt(expires.Unix(), 10)}
 	}
