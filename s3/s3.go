@@ -682,7 +682,7 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 		return err
 	}
 	r, err := s3.run(req, resp)
-	if r.Body != nil {
+	if r != nil && r.Body != nil {
 		r.Body.Close()
 	}
 	return err
