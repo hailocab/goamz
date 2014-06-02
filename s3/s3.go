@@ -317,7 +317,7 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	This function allows you to copy a file from one location to another.
 	The original source file will not be deleted.
 */
-func (b *Bucket) PutCopyFrom(path string, from string, perm ACL, options Options) (resp *http.Response, err error) {
+func (b *Bucket) PutCopyFrom(path string, from string, perm ACL, options Options) error {
 	headers := map[string][]string{
 		"x-amz-acl": {string(perm)},
 	}
@@ -339,7 +339,11 @@ func (b *Bucket) PutCopyFrom(path string, from string, perm ACL, options Options
 		payload: nil,
 	}
 
-	return b.S3.rspquery(req, nil)
+	resp, err := b.S3.rspquery(req, nil)
+	if resp != nil && resp.Body != nil {
+		resp.Body.Close()
+	}
+	return err
 }
 
 type RoutingRule struct {
