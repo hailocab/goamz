@@ -314,6 +314,35 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	return b.S3.query(req, nil)
 }
 
+/*
+	This function allows you to copy a file from one location to another.
+	The original source file will not be deleted.
+*/
+func (b *Bucket) PutCopyFrom(path string, from string, perm ACL, options Options) (resp *http.Response, err error) {
+	headers := map[string][]string{
+		"x-amz-acl": {string(perm)},
+	}
+	if options.SSE {
+		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+	}
+
+	for k, v := range options.Meta {
+		headers["x-amz-meta-"+k] = v
+	}
+
+	headers["x-amz-copy-source"] = []string{from}
+
+	req := &request{
+		method:  "PUT",
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+		payload: nil,
+	}
+
+	return b.S3.rspquery(req, nil)
+}
+
 type RoutingRule struct {
 	ConditionKeyPrefixEquals     string `xml:"Condition>KeyPrefixEquals"`
 	RedirectReplaceKeyPrefixWith string `xml:"Redirect>ReplaceKeyPrefixWith,omitempty"`
@@ -653,6 +682,14 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 	r, err := s3.run(req, resp)
 	r.Body.Close()
 	return err
+}
+
+func (s3 *S3) rspquery(req *request, resp interface{}) (*http.Response, error) {
+	err := s3.prepare(req)
+	if err == nil {
+		return s3.run(req, resp)
+	}
+	return nil, err
 }
 
 // prepare sets up req to be delivered to S3.
