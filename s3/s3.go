@@ -240,7 +240,9 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 		if resp.StatusCode/100 == 2 {
 			exists = true
 		}
-		resp.Body.Close()
+		if resp.Body != nil {
+			resp.Body.Close()
+		}
 		return exists, err
 	}
 	return false, fmt.Errorf("S3 Currently Unreachable")
@@ -651,7 +653,9 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 		return err
 	}
 	r, err := s3.run(req, resp)
-	r.Body.Close()
+	if r.Body != nil {
+		r.Body.Close()
+	}
 	return err
 }
 
