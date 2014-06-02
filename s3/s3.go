@@ -789,7 +789,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 
 	if err != nil {
 
-		if hresp != nil && hresp.Body != nil {
+		if hresp.Body != nil {
 			hresp.Body.Close()
 		}
 
