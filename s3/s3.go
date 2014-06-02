@@ -240,6 +240,7 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 		if resp.StatusCode/100 == 2 {
 			exists = true
 		}
+		resp.Body.Close()
 		return exists, err
 	}
 	return false, fmt.Errorf("S3 Currently Unreachable")
@@ -646,9 +647,11 @@ func (req *request) url() (*url.URL, error) {
 // body will be unmarshalled on it.
 func (s3 *S3) query(req *request, resp interface{}) error {
 	err := s3.prepare(req)
-	if err == nil {
-		_, err = s3.run(req, resp)
+	if err != nil {
+		return err
 	}
+	r, err := s3.run(req, resp)
+	r.Body.Close()
 	return err
 }
 
