@@ -339,10 +339,7 @@ func (b *Bucket) PutCopyFrom(path string, from string, perm ACL, options Options
 		payload: nil,
 	}
 
-	resp, err := b.S3.rspquery(req, nil)
-	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
-	}
+	err := b.S3.query(req, nil)
 	return err
 }
 
@@ -675,14 +672,6 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 		_, err = s3.run(req, resp)
 	}
 	return err
-}
-
-func (s3 *S3) rspquery(req *request, resp interface{}) (*http.Response, error) {
-	err := s3.prepare(req)
-	if err == nil {
-		return s3.run(req, resp)
-	}
-	return nil, err
 }
 
 // prepare sets up req to be delivered to S3.
