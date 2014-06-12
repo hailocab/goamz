@@ -29,31 +29,6 @@ func NewRoute53(auth aws.Auth) (*Route53, error) {
 	}, nil
 }
 
-// Error represents an error in an operation with Route53.
-type Error struct {
-	StatusCode int    // HTTP status code (200, 403, ...)
-	Code       string // EC2 error code ("UnsupportedOperation", ...)
-	Message    string // The human-oriented error message
-	Type       string
-	RequestId  string
-}
-
-func (e *Error) Error() string {
-	return e.Message
-}
-
-func buildError(r *http.Response) error {
-	err := Error{}
-	// TODO return error if Unmarshal fails?
-	xml.NewDecoder(r.Body).Decode(&err)
-	r.Body.Close()
-	err.StatusCode = r.StatusCode
-	if err.Message == "" {
-		err.Message = r.Status
-	}
-	return &err
-}
-
 // General Structs used in all types of requests
 type HostedZone struct {
 	XMLName                xml.Name `xml:"HostedZone"`
@@ -177,7 +152,7 @@ func (r *Route53) query(method string, path string, body io.Reader, result inter
 	}
 
 	if res.StatusCode != 201 && res.StatusCode != 200 {
-		err = buildError(res)
+		err = r.Service.BuildError(res)
 		return err
 	}
 
