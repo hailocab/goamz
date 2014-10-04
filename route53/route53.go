@@ -73,8 +73,8 @@ type AliasTarget struct {
 	EvaluateTargetHealth bool   `xml:"EvaluateTargetHealth"`
 }
 
-// Wrapper for all our different change sets
-type ChangeInterface interface{}
+// Wrapper for all the different resource record sets
+type ResourceRecordSet interface{}
 
 // Basic Change
 type Change struct {
@@ -106,9 +106,9 @@ type AliasResourceRecordSet struct {
 }
 
 type ChangeResourceRecordSetsRequest struct {
-	XMLName xml.Name          `xml:"ChangeResourceRecordSetsRequest"`
-	Xmlns   string            `xml:"xmlns,attr"`
-	Changes []ChangeInterface `xml:"ChangeBatch>Changes>Change"`
+	XMLName xml.Name            `xml:"ChangeResourceRecordSetsRequest"`
+	Xmlns   string              `xml:"xmlns,attr"`
+	Changes []ResourceRecordSet `xml:"ChangeBatch>Changes>Change"`
 }
 
 type HostedZoneConfig struct {
