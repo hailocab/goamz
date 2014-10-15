@@ -176,6 +176,7 @@ func (r *Route53) query(method string, path string, body io.Reader, result inter
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 
 	if method == "POST" {
 		defer req.Body.Close()
