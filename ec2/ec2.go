@@ -232,6 +232,71 @@ type RunInstancesResp struct {
 	Instances      []Instance      `xml:"instancesSet>item"`
 }
 
+type RequestSpotInstancesOptions struct {
+	AvailabilityZoneGroup string
+	InstanceCount         int
+	LaunchGroup           string
+	LaunchSpecification   *LaunchSpecification
+	SpotPrice             string
+	Type                  string
+}
+
+type RequestSpotInstancesResp struct {
+	RequestId          string              `xml:"requestId"`
+	SpotRequestResults []SpotRequestResult `xml:"spotInstanceRequestSet>item"`
+}
+
+type LaunchSpecification struct {
+	BlockDeviceMappings []*BlockDevice
+	EBSOptimised        bool
+	IAMInstanceProfile  string
+	ImageId             string
+	InstanceType        string
+	InstanceCount       int
+	KernelId            string
+	Monitoring          bool
+	KeyName             string
+	Placement           string
+	RAMDiskId           string
+	SecurityGroupIds    []string
+	SecurityGroups      []string
+	SubnetId            string
+	UserData            []byte
+}
+
+type SpotRequestResult struct {
+	SpotRequestId  string         `xml:"spotInstanceRequestId"`
+	SpotPrice      string         `xml:"spotPrice"`
+	Type           string         `xml:"type"`
+	AvailZone      string         `xml:"launchedAvailabilityZone"`
+	InstanceId     string         `xml:"instanceId"`
+	State          string         `xml:"state"`
+	Status         SpotStatus     `xml:"status"`
+	SpotLaunchSpec SpotLaunchSpec `xml:"launchSpecification"`
+	CreateTime     string         `xml:"createTime"`
+	Tags           []Tag          `xml:"tagSet>item"`
+}
+
+type SpotLaunchSpec struct {
+	ImageId            string               `xml:"imageId"`
+	KeyName            string               `xml:"keyName"`
+	InstanceType       string               `xml:"instanceType"`
+	SecurityGroups     []SecurityGroup      `xml:"groupSet>item"`
+	IamInstanceProfile string               `xml:"iamInstanceProfile"`
+	KernelId           string               `xml:"kernelId"`
+	RamdiskId          string               `xml:"ramdiskId"`
+	PlacementGroupName string               `xml:"placement>groupName"`
+	Monitoring         bool                 `xml:"monitoring>enabled"`
+	SubnetId           string               `xml:"subnetId"`
+	BlockDevices       []BlockDeviceMapping `xml:"blockDeviceMapping>item"`
+}
+
+type SpotStatus struct {
+	Code       string `xml:"code"`
+	UpdateTime string `xml:"updateTime"`
+	Message    string `xml:"message"`
+}
+
 // Instance encapsulates a running instance in EC2.
 //
 // See http://goo.gl/OCH8a for more details.
@@ -358,6 +423,57 @@ type IamInstanceProfile struct {
 	ARN  string `xml:"arn"`
 	Id   string `xml:"id"`
 	Name string `xml:"name"`
+}
+
+func (ec2 *EC2) RequestSpotInstances(options *RequestSpotInstancesOptions) (resp *RequestSpotInstancesResp, err error) {
+	params := makeParams("RequestSpotInstances")
+
+	params["DryRun"] = "false"
+
+	token, err := clientToken()
+	if err != nil {
+		return nil, err
+	}
+	params["ClientToken"] = token
+
+	params["AvailabilityZoneGroup"] = options.AvailabilityZoneGroup
+	params["SpotPrice"] = options.SpotPrice
+	params["Type"] = options.Type
+
+	params["LaunchSpecification.EBSOptimised"] = strconv.FormatBool(options.LaunchSpecification.EBSOptimised)
+	params["LaunchSpecification.IAMInstanceProfile"] = options.LaunchSpecification.IAMInstanceProfile
+	params["LaunchSpecification.ImageId"] = options.LaunchSpecification.ImageId
+	params["LaunchSpecification.InstanceCount"] = strconv.Itoa(options.LaunchSpecification.InstanceCount)
+	params["LaunchSpecification.KernelId"] = options.LaunchSpecification.KernelId
+	params["LaunchSpecification.MonitoringEnabled"] = strconv.FormatBool(options.LaunchSpecification.Monitoring)
+	params["LaunchSpecification.KeyName"] = options.LaunchSpecification.KeyName
+	params["LaunchSpecification.Placement"] = options.LaunchSpecification.Placement
+	params["LaunchSpecification.RAMDiskId"] = options.LaunchSpecification.RAMDiskId
+	params["LaunchSpecification.SubnetId"] = options.LaunchSpecification.SubnetId
+	params["LaunchSpecification.UserData"] = string(options.LaunchSpecification.UserData)
+
+	for i, b := range options.LaunchSpecification.BlockDeviceMappings {
+		params["LaunchSpecification.BlockDeviceMapping."+strconv.Itoa(i)+".DeviceName"] = b.DeviceName
+		params["LaunchSpecification.BlockDeviceMapping."+strconv.Itoa(i)+".EBS.VolumeId"] = b.EBS.VolumeId
+		params["LaunchSpecification.BlockDeviceMapping."+strconv.Itoa(i)+".EBS.Status"] = b.EBS.Status
+		params["LaunchSpecification.BlockDeviceMapping."+strconv.Itoa(i)+".EBS.AttachTime"] = b.EBS.AttachTime
+		params["LaunchSpecification.BlockDeviceMapping."+strconv.Itoa(i)+".EBS.DeleteOnTermination"] = strconv.FormatBool(b.EBS.DeleteOnTermination)
+	}
+
+	for i, s := range options.LaunchSpecification.SecurityGroupIds {
+		params["LaunchSpecification.SecurityGroupId."+strconv.Itoa(i)] = s
+	}
+
+	for i, s := range options.LaunchSpecification.SecurityGroups {
+		params["LaunchSpecification.SecurityGroup."+strconv.Itoa(i)] = s
+	}
+
+	resp = &RequestSpotInstancesResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
 }
 
 // RunInstances starts new instances in EC2.
