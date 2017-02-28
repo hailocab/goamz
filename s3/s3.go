@@ -236,7 +236,7 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 
 		if err != nil {
 			// We can treat a 403 or 404 as non existance
-			if (*err.(*Error)).StatusCode == 403 || (*err.(*Error)).StatusCode == 404 {
+			if hasStatusCode(err, 403) || hasStatusCode(err, 404) {
 				return false, nil
 			} else {
 				return false, err
@@ -892,4 +892,9 @@ func shouldRetry(err error) bool {
 func hasCode(err error, code string) bool {
 	s3err, ok := err.(*Error)
 	return ok && s3err.Code == code
+}
+
+func hasStatusCode(err error, code int32) bool {
+	s3err, ok := err.(*Error)
+	return ok && s3err.StatusCode == code
 }
