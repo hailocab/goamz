@@ -894,7 +894,7 @@ func hasCode(err error, code string) bool {
 	return ok && s3err.Code == code
 }
 
-func hasStatusCode(err error, code int32) bool {
+func hasStatusCode(err error, code int) bool {
 	s3err, ok := err.(*Error)
 	return ok && s3err.StatusCode == code
 }
